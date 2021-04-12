@@ -1,0 +1,4 @@
+#!/bin/sh
+env \
+  BB_PRIMARY_DIR="BlackBox" BB_SECONDARY_DIR="$PWD" \
+BlackBox/blackbox $@

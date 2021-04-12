@@ -1,0 +1,5 @@
+#!/bin/bash
+
+./runc <<DATA
+Dev2Linker1.LinkElf Linux foc := Kernel$+ Files HostFiles Math Strings Dates Meta Log Dialog Services Fonts Ports Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog Dev2Linker1 Dev2LnkChmod FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain
+DATA
