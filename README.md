@@ -3,16 +3,16 @@
 
 (now supports Linux & Windows on x86;  uses BlackBox)
 
-[YouTube-channel about this project](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
-[Free Oberon website](https://free.oberon.org)
+* [YouTube-channel about this project](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
+* [Free Oberon website](https://free.oberon.org)
 
 # Консольный компилятор Компонентного Паскаля (Оберона)
 *В разработке*
 
 (сейчас поддерживает Линукс и Виндоус на x86; использует BlackBox)
 
-[Ютуб-канал о данном проекте](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
-[Сайт Free Oberon](https://free.oberon.org)
+* [Ютуб-канал о данном проекте](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
+* [Сайт Free Oberon](https://free.oberon.org)
 
 ## Как собрать проект
 
