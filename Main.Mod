@@ -1,5 +1,5 @@
 MODULE Main;
-IMPORT B, C, Strings;
+IMPORT B;
 BEGIN
   B.Do
 END Main.

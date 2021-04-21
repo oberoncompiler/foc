@@ -1,3 +1,0 @@
-MODULE C;
-IMPORT Math;
-END C.

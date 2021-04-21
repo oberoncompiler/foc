@@ -1,5 +1,5 @@
 MODULE D;
-IMPORT Files, O := Log;
+IMPORT O := Log;
 
 PROCEDURE SayHello*(name: ARRAY OF CHAR);
 BEGIN

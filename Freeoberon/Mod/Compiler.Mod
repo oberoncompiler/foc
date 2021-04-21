@@ -55,7 +55,10 @@ BEGIN
   END
 END GetErrors;
 
-PROCEDURE Compile*(IN path, name: ARRAY OF CHAR;
+(*Компилирует модуль в указанном файле.
+  В случае успеха возвращает TRUE. Иначе записывает
+  список ошибок в errors. *)
+PROCEDURE Compile*(IN fname: ARRAY OF CHAR;
   OUT errors: Errors.List): BOOLEAN;
 VAR loc: Files.Locator;
   f: Files.File;
@@ -64,25 +67,19 @@ VAR loc: Files.Locator;
   error: BOOLEAN;
 BEGIN
   error := TRUE;
-  loc := Files.dir.This(path);
+  loc := Files.dir.This('');
   IF loc.res = 0 THEN
-    v := Views.OldView(loc, name$);
+    v := Views.OldView(loc, fname$);
     IF v # NIL THEN
       WITH v: TextViews.View DO
         src := v.ThisModel();
         DevCompiler.CompileText(src, 0, error);
-        IF error THEN GetErrors(src.NewReader(NIL), name, errors) END
-      ELSE
-        Out.String("file open error: ");
-          Out.String(path); Out.String(" "); Out.String(name); Out.Ln
+        IF error THEN GetErrors(src.NewReader(NIL), fname, errors) END
+      ELSE Out.String('Ошибка открытия файла: '); Out.String(fname); Out.Ln
       END
-    ELSE
-      Out.String("file not found: ");
-        Out.String(path); Out.String(" "); Out.String(name); Out.Ln
+    ELSE Out.String('Файл не найден: '); Out.String(fname); Out.Ln
     END
-  ELSE
-    Out.String("path not found: ");
-      Out.String(path); Out.Ln
+  ELSE Out.String('Не удалось создать локатор.'); Out.Ln
   END;
   RETURN ~error
 END Compile;
