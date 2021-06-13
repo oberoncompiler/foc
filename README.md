@@ -1,5 +1,5 @@
 # Console Compiler for Component Pascal (Oberon)
-*Already works, but still under construction*
+*Under construction*
 
 (now supports Linux & Windows on x86; uses BlackBox)
 
@@ -9,7 +9,7 @@
 *Engish version in the bottom*
 
 # Консольный компилятор Компонентного Паскаля (Оберона)
-*Уже работает, но всё ещё в разработке*
+*В разработке*
 
 (сейчас поддерживает Линукс и Виндоус на x86; использует BlackBox)
 

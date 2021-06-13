@@ -66,15 +66,22 @@ BEGIN
   RETURN p # NIL
 END InList;
 
-PROCEDURE MaybeAddExtension(IN mod: ARRAY OF CHAR;
-    IN ext: ARRAY OF CHAR; OUT fname: ARRAY OF CHAR);
-VAR i: INTEGER;
+(*Удаляет расширение файла ext в строке mod, если оно там есть.*)
+PROCEDURE MaybeRemoveExtension(VAR mod: ARRAY OF CHAR;
+    IN ext: ARRAY OF CHAR);
+VAR i, j: INTEGER;
 BEGIN
-  i := 0; WHILE (mod[i] # 0X) & (mod[i] # '.') DO INC(i) END;
-  IF mod[i] # 0X THEN fname := mod$
-  ELSE fname := mod + '.' + ext
+  i := 0; WHILE mod[i] # 0X DO INC(i) END;
+  j := 0; WHILE ext[j] # 0X DO INC(j) END;
+  IF i > j + 1 THEN
+    REPEAT DEC(i); DEC(j) UNTIL (j = -1) OR (mod[i] # ext[j]);
+    IF (j = -1) & (mod[i] = '.') THEN mod[i] := 0X END
   END
-END MaybeAddExtension;
+  (*              i
+  mod = EngineMain.Mod
+  ext =            Mod
+                  j    *)
+END MaybeRemoveExtension;
 
 PROCEDURE FileOld(fname: ARRAY OF CHAR): Files.File;
 VAR F: Files.File;
@@ -105,51 +112,74 @@ BEGIN
   RETURN F
 END FileOld;
 
-(*Открывает файл fname, возвращает TRUE и записывает бегунок в r.
-  В случае ошибки возвращает FALSE и записывает NIL в r.*)
-PROCEDURE TryOpen(IN fname: ARRAY OF CHAR; OUT r: Files.Reader): BOOLEAN;
+(*Открывает файл fname, возвращает TRUE, записывает бегунок в r,
+  а fname копирует в fname2 (для удобства).
+  В случае ошибки возвращает FALSE.*)
+PROCEDURE TryOpen(IN fname: ARRAY OF CHAR; OUT r: Files.Reader;
+    OUT fname2: ARRAY OF CHAR): BOOLEAN;
 VAR F: Files.File;
-BEGIN r := NIL;
+BEGIN
   (*Out.String('ПРОБУЮ "' + fname + '"');*)
   F := FileOld(fname$);
-  IF F # NIL THEN r := F.NewReader(NIL) END;
+  IF F # NIL THEN r := F.NewReader(NIL); fname2 := fname$ END;
   (*IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln;*)
   RETURN r # NIL
 END TryOpen;
+
+PROCEDURE SplitModName(IN mod: ARRAY OF CHAR;
+    OUT w1, w2: ARRAY OF CHAR): BOOLEAN;
+BEGIN
+  RETURN FALSE (*!TODO*)
+END SplitModName;
 
 (*Находит файл модуля mod, открывает его, возвращая бегунок.
   Если exactFname = TRUE, то mod - имя файла. exactFname = TRUE
   для главного модуля в случае, если пользователь указал ключ "--exact".
   В fname записывается найденное имя файла. system устанавливается
   в TRUE в случае, если модуль оказался системным.
-  Если не удалось найти или открыть файл, возвращает NIL.
+  Если не удалось найти файл, возвращает NIL.
   В случае вызова `foc Games/Game1/Tetris`, в mod идёт только 'Tetris'.
   Примеры mod: 'Prog', 'Prog.Mod', 'code.txt'. *)
 PROCEDURE OpenModule(mod: ARRAY OF CHAR; exactFname: BOOLEAN;
     OUT fname: ARRAY OF CHAR;
     OUT system, hasSource: BOOLEAN): Files.Reader;
-VAR r: Files.Reader;
-  sysfname: String;
+VAR r, r2: Files.Reader;
+  w1, w2, fname2: String;
+  twoWords: BOOLEAN;
 BEGIN
-  IF exactFname THEN fname := mod$
-  ELSE MaybeAddExtension(mod, 'Mod', fname);
-    MaybeAddExtension(mod, 'osf', sysfname);
+  IF exactFname THEN (*!TODO*)
+  ELSE MaybeRemoveExtension(mod, 'Mod')
   END;
 
+  twoWords := SplitModName(mod, w1, w2);
+
   (* 1. В рабочем каталоге: EngineMain.Mod *)
-  IF TryOpen(workDir + fname, r) THEN
-    system := FALSE; hasSource := TRUE;
-    fname := workDir + fname
-                    (* 2. В рабочем каталоге: Sym/EngineMain.osf *)
-                    (* 3. В рабочем каталоге: Engine/Main.Mod *)
-                    (* 4. В рабочем каталоге: Engine/Mod/Main.Mod *)
-                    (* 5. В рабочем каталоге: Engine/Sym/Main.osf *)
-  (* 6. В системном каталоге: Sym/EngineMain.osf *)
-  ELSIF TryOpen(sysDir + 'Sym/' + sysfname, r) THEN
-    system := TRUE; hasSource := FALSE;
-    fname := sysDir + 'Sym/' + sysfname
+  IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
+    system := FALSE; hasSource := TRUE
+  (* 2. В рабочем каталоге: Code/EngineMain.ocf   ← *)
+  ELSIF TryOpen(workDir + 'Code/' + mod + '.ocf', r, fname) &
+        TryOpen(workDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
+    system := FALSE; hasSource := FALSE
+  (* 3. В рабочем каталоге: Engine/Main.Mod *)
+  ELSIF twoWords & TryOpen(workDir + w1 + '/' + w2 + '.Mod', r, fname) THEN
+    system := FALSE; hasSource := TRUE
+  (* 4. В рабочем каталоге: Engine/Mod/Main.Mod *)
+  ELSIF twoWords & TryOpen(workDir + w1 + '/Mod/' + w2 + '.Mod', r, fname) THEN
+    system := FALSE; hasSource := TRUE
+  (* 5. В рабочем каталоге: Engine/Code/Main.ocf  ← *)
+  ELSIF twoWords & TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
+                   TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
+    system := FALSE; hasSource := FALSE
+  (* 6. В системном каталоге: Code/EngineMain.ocf *)
+  ELSIF TryOpen(sysDir + 'Code/' + mod + '.ocf', r, fname) &
+        TryOpen(sysDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
+    system := TRUE; hasSource := FALSE
+  (* 7. В системном каталоге: Engine/Code/Main.ocf *)
+  ELSIF twoWords & TryOpen(sysDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
+                   TryOpen(sysDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
+    system := TRUE; hasSource := FALSE
+  ELSE r := NIL
   END;
-                    (* 7. В системном каталоге: Engine/Sym/Main.osf *)
   RETURN r
 END OpenModule;
 
@@ -202,10 +232,10 @@ BEGIN
   RETURN list
 END ReadImportListFromSource;
 
-(*Считывает список непосредственного импорта из символьный файла
-  модуля, возвращает его в виде списка (Item).
+(*Считывает список непосредственного импорта из файла с машинным
+  кодом модуля и возвращает его в виде списка (Item).
   Название модуля помещает в modName.*)
-PROCEDURE ReadImportListFromSym(r: Files.Reader; VAR error: BOOLEAN;
+PROCEDURE ReadImportListFromCode(r: Files.Reader; VAR error: BOOLEAN;
     OUT modName: ARRAY OF CHAR): Item;
 VAR list: Item;
   name: String;
@@ -214,14 +244,14 @@ BEGIN (*!TODO это заглушка*)
   list := NIL;
   modName := 'Log';
   RETURN list
-END ReadImportListFromSym;
+END ReadImportListFromCode;
 
 PROCEDURE ReadImportList(r: Files.Reader; isSource: BOOLEAN;
     VAR error: BOOLEAN; OUT modName: ARRAY OF CHAR): Item;
 VAR list: Item;
 BEGIN
   IF isSource THEN list := ReadImportListFromSource(r, error, modName)
-  ELSE list := ReadImportListFromSym(r, error, modName)
+  ELSE list := ReadImportListFromCode(r, error, modName)
   END;
   RETURN list
 END ReadImportList;
@@ -269,6 +299,15 @@ BEGIN
   RETURN Compiler.Compile(fname$, errors)
 END CompileModule;
 
+PROCEDURE OutInfo(p: Item);
+BEGIN
+  Out.String('ИНФОРМАЦИЯ О МОДУЛЕ ' + p.name); Out.Ln;
+  Out.String('  fname     = ' + p.fname); Out.Ln;
+  Out.String('  system    = '); IF p.system THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
+  Out.String('  hasSource = '); IF p.hasSource THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
+  Out.Ln
+END OutInfo;
+
 (*Компилирует все модули в списке в указанном порядке.
   В случае успеха возвращает TRUE.*)
 PROCEDURE CompileAll(list: Item; OUT errors: Errors.List): BOOLEAN;
@@ -278,7 +317,8 @@ BEGIN
   error := FALSE;
   p := list;
   WHILE ~error & (p # NIL) DO
-    IF ~p.system THEN
+    OutInfo(p);
+    IF p.hasSource THEN
       IF ~CompileModule(p.fname$, errors) THEN error := TRUE END
     END;
     p := p.next

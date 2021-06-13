@@ -1426,7 +1426,8 @@ MODULE HostFiles;
 		wildcard := "*"; NEW(dir);
 
 		(*HostEnv.GetPar(bbPrimaryDir, fname, res1);*) (* <- LINE IS REPLACED WITH: *)
-		fname := 'BlackBox'; res1 := 0;
+		(*fname := 'BlackBox'; res1 := 0;*)
+		fname := '.'; res1 := 0;
 		(* END OF REPLACE *)
 
 		IF res1 = 2 THEN
