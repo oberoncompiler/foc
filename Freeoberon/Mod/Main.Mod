@@ -1,6 +1,7 @@
 MODULE FreeoberonMain;
 IMPORT Compiler := FreeoberonCompiler, Scan := FreeoberonScanner,
   Linker := FreeoberonLinker, Kernel, Errors := FreeoberonErrors,
+  Config := FreeoberonConfig,
   Converters, Out := Log, Files, Args;
 
 TYPE
@@ -18,7 +19,7 @@ TYPE
 
 VAR
   modules: Item;
-  workDir, sysDir: String;
+  workDir: String;
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
@@ -119,10 +120,10 @@ PROCEDURE TryOpen(IN fname: ARRAY OF CHAR; OUT r: Files.Reader;
     OUT fname2: ARRAY OF CHAR): BOOLEAN;
 VAR F: Files.File;
 BEGIN
-  (*Out.String('ПРОБУЮ "' + fname + '"');*)
+  Out.String('ПРОБУЮ "' + fname + '"');
   F := FileOld(fname$);
   IF F # NIL THEN r := F.NewReader(NIL); fname2 := fname$ END;
-  (*IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln;*)
+  IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln;
   RETURN r # NIL
 END TryOpen;
 
@@ -171,12 +172,12 @@ BEGIN
                    TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
     system := FALSE; hasSource := FALSE
   (* 6. В системном каталоге: Code/EngineMain.ocf *)
-  ELSIF TryOpen(sysDir + 'Code/' + mod + '.ocf', r, fname) &
-        TryOpen(sysDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
+  ELSIF TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r, fname) &
+        TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
     system := TRUE; hasSource := FALSE
   (* 7. В системном каталоге: Engine/Code/Main.ocf *)
-  ELSIF twoWords & TryOpen(sysDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
-                   TryOpen(sysDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
+  ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
+                   TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
     system := TRUE; hasSource := FALSE
   ELSE r := NIL
   END;
@@ -357,7 +358,9 @@ BEGIN
     Args.GetParam(1, s);
     modules := NIL;
     IF Import(s, FALSE(*!TODO проверять ключ --exact*)) THEN
+      Out.String('===== НАЧИНАЮ КОМПИЛЯЦИЮ ====='); Out.Ln;
       IF CompileAll(modules, errors) THEN
+        Out.String('===== НАЧИНАЮ КОМПОНОВКУ ====='); Out.Ln;
         IF Link(modules) THEN
           Out.String('Исполнимый файл создан.'); Out.Ln
         ELSE Out.String('Не удалось скомпоновать.'); Out.Ln
@@ -380,7 +383,8 @@ END Init;
 
 BEGIN
   Init;
-  workDir := ''; sysDir := 'BlackBox/';
+  workDir := '';
+  Config.SetSysDir('BlackBox/');
   Do;
   Kernel.Quit(0)
 END FreeoberonMain.

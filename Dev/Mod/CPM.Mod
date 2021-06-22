@@ -1,5 +1,6 @@
 MODULE DevCPM; 
-IMPORT SYSTEM, Kernel, Files, Stores, Models, TextModels, StdLog, DevMarkers, Dialog, Utf;
+IMPORT SYSTEM, Kernel, Files, Stores, Models, TextModels, StdLog, DevMarkers, Dialog, Utf,
+  Config := FreeoberonConfig, Out := Log;
 
 CONST
   ProcSize* = 4;  (* PROCEDURE type *)
@@ -662,7 +663,7 @@ END eofSF;
 
 (*!TODO REPLACE THIS*)
 PROCEDURE OldSym* (IN modName: ARRAY OF SHORTCHAR; VAR done: BOOLEAN);
-  VAR tag, res: INTEGER; loc: Files.Locator; dir, name: Files.Name;
+VAR tag, res: INTEGER; loc: Files.Locator; dir, name: Files.Name;
 BEGIN
   done := FALSE;
   IF modName = "@file" THEN
@@ -677,6 +678,23 @@ BEGIN
       oldSymFile := Files.dir.Old(loc, name, Files.shared)
     END
   END;
+
+  (*CODE ADDED BEGIN*)
+  IF oldSymFile = NIL THEN
+    loc := Files.dir.This(Config.sysDir);
+    Out.String('   CPM: Config.sysDir=' + Config.sysDir);
+    loc := loc.This(dir); loc := loc.This(symDir);
+    Out.String('  dir=' + dir); Out.String('   symDir=' + symDir);
+    Out.String('  name=' + name); Out.Ln;
+    oldSymFile := Files.dir.Old(loc, name, Files.shared);
+    IF (oldSymFile = NIL) & (dir = "") THEN
+      loc := Files.dir.This(Config.sysDir);
+      loc := loc.This(SYSdir); loc := loc.This(symDir);
+      oldSymFile := Files.dir.Old(loc, name, Files.shared)
+    END
+  END;
+  (*CODE ADDED END*)
+
   IF oldSymFile # NIL THEN
     inSym := oldSymFile.NewReader(inSym);
     IF inSym # NIL THEN
@@ -684,6 +702,7 @@ BEGIN
       IF tag = SFtag THEN done := TRUE ELSE err(151) END
     END
   END
+
 END OldSym;
 
 PROCEDURE CloseOldSym*;

@@ -2,11 +2,17 @@ PROG=foc
 
 all: $(PROG)
 
+Freeoberon/Code/Config.ocf: Freeoberon/Mod/Config.Mod
+	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Config.Mod')" | ./runc
+
 Host/Code/Files.ocf: Host/Mod/Files.Mod
 	echo "ConsCompiler.Compile('Host/Mod', 'Files.Mod')" | ./runc
 
-Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod
+Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev/Mod', 'CPM.Mod')" | ./runc
+
+Dev2/Code/LnkBase.ocf: Dev2/Mod/LnkBase.Mod Freeoberon/Code/Config.ocf
+	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkBase.Mod')" | ./runc
 
 Host/Code/Args.ocf: Host/Mod/Args.Mod System/Mod/Args.Mod
 	echo "ConsCompiler.Compile('System/Mod', 'Args.Mod')" | ./runc
@@ -21,16 +27,16 @@ Freeoberon/Code/Errors.ocf: Freeoberon/Mod/Errors.Mod
 Freeoberon/Code/Compiler.ocf: Freeoberon/Mod/Compiler.Mod Freeoberon/Code/Errors.ocf Host/Code/Files.ocf Dev/Code/CPM.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Compiler.Mod')" | ./runc
 
-Dev2/Code/LnkChmod.ocf: Dev2/Mod/LnkChmod.Mod
+Dev2/Code/LnkChmod.ocf: Dev2/Mod/LnkChmod.Mod Dev2/Code/LnkBase.ocf
 	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkChmod.Mod')" | ./runc
 
 Freeoberon/Code/LinkerProxy.ocf: Freeoberon/Mod/LinkerProxy.Mod Dev/Code/CPM.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'LinkerProxy.Mod')" | ./runc
 
-Freeoberon/Code/Linker.ocf: Freeoberon/Mod/Linker.Mod Freeoberon/Code/LinkerProxy.ocf
+Freeoberon/Code/Linker.ocf: Freeoberon/Mod/Linker.Mod Freeoberon/Code/LinkerProxy.ocf Dev2/Code/LnkBase.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Linker.Mod')" | ./runc
 
-Freeoberon/Code/Main.ocf: Freeoberon/Mod/Main.Mod Freeoberon/Code/Scanner.ocf Freeoberon/Code/Compiler.ocf Freeoberon/Code/Linker.ocf Host/Code/Args.ocf
+Freeoberon/Code/Main.ocf: Freeoberon/Mod/Main.Mod Freeoberon/Code/Config.ocf Freeoberon/Code/Scanner.ocf Freeoberon/Code/Compiler.ocf Freeoberon/Code/Linker.ocf Host/Code/Args.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Main.Mod')" | ./runc
 
 $(PROG): Freeoberon/Code/Main.ocf Freeoberon/Code/Scanner.ocf Freeoberon/Code/Errors.ocf Freeoberon/Code/Compiler.ocf Freeoberon/Code/Linker.ocf Host/Code/Args.ocf Host/Code/Files.ocf Dev2/Code/LnkChmod.ocf
