@@ -1,7 +1,9 @@
 @IF "%1"=="clean" GOTO :CLEAN
 @IF "%1"=="linux" GOTO :LINUX
 
-@SET runc=BlackBox\BlackBoxInterp.exe /USE .
+@SET BBEXE=BlackBox\BlackBoxInterp.exe
+@IF NOT EXIST %BBEXE% GOTO :ERRNOBB
+@SET runc=%BBEXE% /USE .
 
 @IF NOT EXIST __WIN_BlackBox GOTO ENDIF1
 	@MOVE BlackBox __LIN_BlackBox
@@ -55,7 +57,7 @@
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'LinkerProxy.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Linker.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Main.Mod') | %runc%
-@ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv HostFiles Math Strings Dates Unicode Meta Log Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders DevLinker DevMarkers FreeoberonConfig DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
+@ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv Log HostFiles Math Strings Dates Unicode Meta Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders FreeoberonConfig DevLinker DevMarkers FreeoberonConfig DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
 
 @GOTO :ENDPROG
 
@@ -118,5 +120,10 @@
 	@MOVE Freeoberon\Mod\__LIN_LinkerProxy.Mod Freeoberon\Mod\LinkerProxy.Mod
 :ENDIF4
 
+@GOTO :ENDPROG
+
+:ERRNOBB
+
+@ECHO BlackBox executable file not found: %BBEXE%
 
 :ENDPROG

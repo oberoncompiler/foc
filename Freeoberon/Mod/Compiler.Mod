@@ -14,10 +14,12 @@ BEGIN
   r.ReadChar(c);
   WHILE ~r.eot & (r.Pos() < tmp) DO
     IF c = 0DX THEN (* New line *)
-      INC(row); col := 1;
+      INC(row); col := 1; i := 0;
       INC(pos)
     ELSIF c # 2X THEN
-      IF col - 2 < LEN(line) THEN line[col - 1] := c END;
+      IF (i - 1 < LEN(line)) & ((c > ' ') OR (i # 0)) THEN
+        line[i] := c; INC(i)
+      END;
       INC(col);
       IF c < 80X THEN INC(pos) ELSE INC(pos, 2) END
     END;
@@ -25,7 +27,7 @@ BEGIN
   END;
   i := col - 1;
   WHILE ~r.eot & (i - 1 < LEN(line)) & (c # 0DX) DO
-    line[i] := c; INC(i);
+    IF c >= ' ' THEN line[i] := c; INC(i) END;
     r.ReadChar(c)
   END;
   line[i] := 0X;

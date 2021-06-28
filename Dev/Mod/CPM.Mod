@@ -682,10 +682,12 @@ BEGIN
   (*CODE ADDED BEGIN*)
   IF oldSymFile = NIL THEN
     loc := Files.dir.This(Config.sysDir);
-    Out.String('   CPM: Config.sysDir=' + Config.sysDir);
+    IF Config.debug THEN Out.String('   CPM: Config.sysDir=' + Config.sysDir) END;
     loc := loc.This(dir); loc := loc.This(symDir);
-    Out.String('  dir=' + dir); Out.String('   symDir=' + symDir);
-    Out.String('  name=' + name); Out.Ln;
+    IF Config.debug THEN
+      Out.String('  dir=' + dir); Out.String('   symDir=' + symDir);
+      Out.String('  name=' + name); Out.Ln
+    END;
     oldSymFile := Files.dir.Old(loc, name, Files.shared);
     IF (oldSymFile = NIL) & (dir = "") THEN
       loc := Files.dir.This(Config.sysDir);

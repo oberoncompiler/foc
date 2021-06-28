@@ -2,7 +2,7 @@ MODULE FreeoberonMain;
 IMPORT Compiler := FreeoberonCompiler, Scan := FreeoberonScanner,
   Linker := FreeoberonLinker, Kernel, Errors := FreeoberonErrors,
   Config := FreeoberonConfig,
-  Converters, Out := Log, Files, Args;
+  Converters, Out := Log, Files, HostFiles, Args;
 
 TYPE
   String = ARRAY 255 OF CHAR;
@@ -120,10 +120,12 @@ PROCEDURE TryOpen(IN fname: ARRAY OF CHAR; OUT r: Files.Reader;
     OUT fname2: ARRAY OF CHAR): BOOLEAN;
 VAR F: Files.File;
 BEGIN
-  Out.String('ПРОБУЮ "' + fname + '"');
+  IF Config.debug THEN Out.String('ПРОБУЮ "' + fname + '"') END;
   F := FileOld(fname$);
   IF F # NIL THEN r := F.NewReader(NIL); fname2 := fname$ END;
-  IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln;
+  IF Config.debug THEN
+    IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln
+  END;
   RETURN r # NIL
 END TryOpen;
 
@@ -302,11 +304,13 @@ END CompileModule;
 
 PROCEDURE OutInfo(p: Item);
 BEGIN
-  Out.String('ИНФОРМАЦИЯ О МОДУЛЕ ' + p.name); Out.Ln;
-  Out.String('  fname     = ' + p.fname); Out.Ln;
-  Out.String('  system    = '); IF p.system THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
-  Out.String('  hasSource = '); IF p.hasSource THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
-  Out.Ln
+  IF Config.debug THEN
+    Out.String('ИНФОРМАЦИЯ О МОДУЛЕ ' + p.name); Out.Ln;
+    Out.String('  fname     = ' + p.fname); Out.Ln;
+    Out.String('  system    = '); IF p.system THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
+    Out.String('  hasSource = '); IF p.hasSource THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
+    Out.Ln
+  END
 END OutInfo;
 
 (*Компилирует все модули в списке в указанном порядке.
@@ -358,11 +362,11 @@ BEGIN
     Args.GetParam(1, s);
     modules := NIL;
     IF Import(s, FALSE(*!TODO проверять ключ --exact*)) THEN
-      Out.String('===== НАЧИНАЮ КОМПИЛЯЦИЮ ====='); Out.Ln;
+      IF Config.debug THEN Out.String('===== НАЧИНАЮ КОМПИЛЯЦИЮ ====='); Out.Ln END;
       IF CompileAll(modules, errors) THEN
-        Out.String('===== НАЧИНАЮ КОМПОНОВКУ ====='); Out.Ln;
+        IF Config.debug THEN Out.String('===== НАЧИНАЮ КОМПОНОВКУ ====='); Out.Ln END;
         IF Link(modules) THEN
-          Out.String('Исполнимый файл создан.'); Out.Ln
+          IF Config.debug THEN Out.String('Исполнимый файл создан.'); Out.Ln END
         ELSE Out.String('Не удалось скомпоновать.'); Out.Ln
         END
       ELSE Errors.ShowList(errors)
@@ -373,18 +377,22 @@ BEGIN
 END Do;
 
 PROCEDURE Init;
+VAR dir: ARRAY 1000 OF CHAR;
 BEGIN
   Converters.Register('Documents.ImportDocument',
     'Documents.ExportDocument', '', 'odc', {});
   Converters.Register('HostTextConv.ImportUtf8',
     'HostTextConv.ExportUtf8', 'TextViews.View', 'Mod',
-    {Converters.importAll})
+    {Converters.importAll});
+
+  workDir := '';
+  Config.GetAppDir(dir);
+  Config.SetSysDir(dir + 'BlackBox/');
+  HostFiles.IgnoreAsk
 END Init;
 
 BEGIN
   Init;
-  workDir := '';
-  Config.SetSysDir('BlackBox/');
   Do;
   Kernel.Quit(0)
 END FreeoberonMain.

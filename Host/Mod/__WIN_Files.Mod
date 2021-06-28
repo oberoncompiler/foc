@@ -1,8 +1,11 @@
 MODULE HostFiles;
 
-IMPORT SYSTEM, WinApi, Files, Kernel, HostEnv;
+IMPORT SYSTEM, WinApi, Files, Kernel, HostEnv,
+  Out := Log;
 
 CONST
+  debug = FALSE;
+
   tempName = "odcxxxxx.tmp";
   docType = "odc";
 
@@ -908,6 +911,7 @@ BEGIN
   res := ok; f := NIL;
   WITH loc: Locator DO
     Append(loc.path, name, "", loc.maxLen, fname);
+    IF debug THEN Out.String('Openning "' + fname + '".'); Out.Ln END;
     f := ThisFile(fname);
     IF f # NIL THEN
       IF ~shrd OR (f.state = exclusive) THEN loc.res := Error(sharingErr); RETURN NIL
@@ -917,6 +921,7 @@ BEGIN
     IF shrd THEN s := shared ELSE s := exclusive END;
     OpenFile(s, fname, ref, res);
 
+    (* EDITED by Oberon Team, 2021-06-27 --
     IF ((res = fileNotFoundErr) OR (res = pathNotFoundErr))
       & (isUseDir & isCustomDir) THEN
       GetCustomDir(loc, fname);
@@ -942,6 +947,7 @@ BEGIN
       END;
       OpenFile(s, fname, ref, res)
     END;
+    -- END OF EDIT*)
 
     IF res = ok THEN
       NEW(f); f.loc := loc;
@@ -1274,7 +1280,8 @@ BEGIN
 
   isCustomDir := FALSE;
   (*HostEnv.GetPar(bbCustomDir, path, res);*) (* <- REPLACED, Free Oberon Team, 2021.04.05*)
-  path := 'BlackBox'; res := 0;
+  (*path := 'BlackBox'; res := 0;*)
+  path := '.'; res := 0;
   (*END OF REPLACE*)
   IF res = 0 THEN
     res := 3;	(* error *)
