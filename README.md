@@ -1,4 +1,4 @@
-# Console Oberon Compiler 2021
+# Cross-platform Oberon Compiler 2021
 ## Console Compiler for Component Pascal (Oberon)
 
 (now supports Linux & Windows on x86; uses BlackBox)
@@ -8,7 +8,7 @@
 
 *Engish version in the bottom*
 
-# Консольный компилятор Оберона 2021
+# Кроссплатформенный компилятор Оберона 2021
 ## Консольный компилятор Компонентного Паскаля (Оберона)
 
 (сейчас поддерживает Линукс и Виндоус на x86; использует BlackBox)
