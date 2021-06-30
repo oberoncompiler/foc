@@ -1,4 +1,7 @@
 # Cross-platform Oberon Compiler 2021
+
+![Oberon Compiler screenshot](screenshot.png)
+
 ## Console Compiler for Component Pascal (Oberon)
 
 (now supports Linux & Windows on x86; uses BlackBox)
