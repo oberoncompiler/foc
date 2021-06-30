@@ -9,7 +9,7 @@
 * [YouTube-channel about the project](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
 * [Free Oberon website](https://free.oberon.org/en)
 
-*Engish version in the bottom*
+*See Engish version below*
 
 # Кроссплатформенный компилятор Оберона 2021
 ## Консольный компилятор Компонентного Паскаля (Оберона)
