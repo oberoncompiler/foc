@@ -1,7 +1,7 @@
 MODULE FreeoberonMain;
 IMPORT Compiler := FreeoberonCompiler, Scan := FreeoberonScanner,
   Linker := FreeoberonLinker, Kernel, Errors := FreeoberonErrors,
-  Config := FreeoberonConfig,
+  Config := FreeoberonConfig, Platform := FreeoberonPlatform,
   Converters, Out := Log, Files, HostFiles, Args;
 
 TYPE
@@ -386,7 +386,7 @@ BEGIN
     {Converters.importAll});
 
   workDir := '';
-  Config.GetAppDir(dir);
+  Platform.GetAppDir(dir);
   Config.SetSysDir(dir + 'BlackBox/');
   HostFiles.IgnoreAsk
 END Init;
