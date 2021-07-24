@@ -31,20 +31,20 @@
 	@MOVE __WIN_BlackBox BlackBox >NUL
 :ENDIF6
 
-@IF NOT EXIST Host\Mod\__WIN_Args.Mod GOTO ENDIF2
+@IF NOT EXIST Host\Mod\__WIN_Args.Mod GOTO ENDIF7
 	@MOVE Host\Mod\Args.Mod Host\Mod\__LIN_Args.Mod >NUL
 	@MOVE Host\Mod\__WIN_Args.Mod Host\Mod\Args.Mod >NUL
-:ENDIF2
+:ENDIF7
 
-@IF NOT EXIST Host\Mod\__WIN_Files.Mod GOTO ENDIF3
+@IF NOT EXIST Host\Mod\__WIN_Files.Mod GOTO ENDIF8
 	@MOVE Host\Mod\Files.Mod Host\Mod\__LIN_Files.Mod >NUL
 	@MOVE Host\Mod\__WIN_Files.Mod Host\Mod\Files.Mod >NUL
-:ENDIF3
+:ENDIF8
 
-@IF NOT EXIST Freeoberon\Mod\__WIN_LinkerProxy.Mod GOTO ENDIF4
+@IF NOT EXIST Freeoberon\Mod\__WIN_LinkerProxy.Mod GOTO ENDIF9
 	@MOVE Freeoberon\Mod\LinkerProxy.Mod Freeoberon\Mod\__LIN_LinkerProxy.Mod >NUL
 	@MOVE Freeoberon\Mod\__WIN_LinkerProxy.Mod Freeoberon\Mod\LinkerProxy.Mod >NUL
-:ENDIF4
+:ENDIF9
 
 @SET BBEXE=BlackBox\BlackBoxInterp.exe
 @IF NOT EXIST %BBEXE% GOTO :ERRNOBB
@@ -56,13 +56,14 @@
 @ECHO ConsCompiler.Compile('Host\Mod', 'Files.Mod') | %runc%
 @ECHO ConsCompiler.Compile('System\Mod', 'Args.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Host\Mod', 'Args.Mod') | %runc%
+@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Platform.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Scanner.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Errors.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Compiler.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'LinkerProxy.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Linker.Mod') | %runc%
 @ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Main.Mod') | %runc%
-@ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv Log HostFiles Math Strings Dates Unicode Meta Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders FreeoberonConfig DevLinker DevMarkers DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
+@ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv Log HostFiles Math Strings Dates Unicode Meta Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders FreeoberonConfig DevLinker DevMarkers DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonPlatform FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
 
 @XCOPY/S/Q/Y/I Code BlackBox\Code >NUL
 @XCOPY/S/Q/Y/I Dev BlackBox\Dev >NUL
@@ -113,10 +114,10 @@
 	@MOVE Freeoberon\Mod\__LIN_LinkerProxy.Mod Freeoberon\Mod\LinkerProxy.Mod >NUL
 :ENDIF14
 
-@IF NOT EXIST Freeoberon\Mod\__LIN_Platform.Mod GOTO ENDIF14
+@IF NOT EXIST Freeoberon\Mod\__LIN_Platform.Mod GOTO ENDIF15
 	@MOVE Freeoberon\Mod\Platform.Mod Freeoberon\Mod\__WIN_Platform.Mod >NUL
 	@MOVE Freeoberon\Mod\__LIN_Platform.Mod Freeoberon\Mod\Platform.Mod >NUL
-:ENDIF14
+:ENDIF15
 
 @IF NOT EXIST __LIN_BlackBox GOTO ENDIF16
 	@MOVE BlackBox __WIN_BlackBox >NUL
