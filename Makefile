@@ -13,6 +13,8 @@ Freeoberon/Code/Platform.ocf: Freeoberon/Mod/Platform.Mod Code/Args.ocf
 
 Freeoberon/Code/Config.ocf: Freeoberon/Mod/Config.Mod
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Config.Mod')" | ./runc
+	mkdir -p BlackBox/Freeoberon/Code
+	cp Freeoberon/Code/Config.ocf BlackBox/Freeoberon/Code
 
 Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev/Mod', 'CPM.Mod')" | ./runc
