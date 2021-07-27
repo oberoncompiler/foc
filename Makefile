@@ -12,9 +12,11 @@ Freeoberon/Code/Platform.ocf: Freeoberon/Mod/Platform.Mod Code/Args.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Platform.Mod')" | ./runc
 
 Freeoberon/Code/Config.ocf: Freeoberon/Mod/Config.Mod
+	rm -rf BlackBox/Freeoberon
+	mkdir -p BlackBox/Freeoberon/Code BlackBox/Freeoberon/Sym
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Config.Mod')" | ./runc
-	mkdir -p BlackBox/Freeoberon/Code
 	cp Freeoberon/Code/Config.ocf BlackBox/Freeoberon/Code
+	cp Freeoberon/Sym/Config.osf BlackBox/Freeoberon/Sym
 
 Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev/Mod', 'CPM.Mod')" | ./runc
@@ -54,6 +56,7 @@ $(PROG): Freeoberon/Code/Main.ocf Host/Code/Files.ocf Dev2/Code/LnkChmod.ocf
 clean:
 	rm -rf Freeoberon/Code \
 		Freeoberon/Sym \
+		BlackBox/Freeoberon \
 		System/Code \
 		System/Sym \
 		Host/Code \
