@@ -50,19 +50,12 @@
 @IF NOT EXIST %BBEXE% GOTO :ERRNOBB
 @SET runc=%BBEXE% /USE .
 
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Config.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Dev\Mod', 'CPM.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Dev\Mod', 'Linker.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Host\Mod', 'Files.Mod') | %runc%
-@ECHO ConsCompiler.Compile('System\Mod', 'Args.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Host\Mod', 'Args.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Platform.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Scanner.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Errors.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Compiler.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'LinkerProxy.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Linker.Mod') | %runc%
-@ECHO ConsCompiler.Compile('Freeoberon\Mod', 'Main.Mod') | %runc%
+@ECHO ConsCompiler.Compile('Cons\Mod', 'MultiCompiler.Mod') | %runc%
+
+@ECHO ConsMultiCompiler.Compile('Freeoberon/Mod/Config.Mod;Dev/Mod/CPM.Mod;Dev/Mod/Linker.Mod;Host/Mod/Files.Mod;System/Mod/Args.Mod;Host/Mod/Args.Mod') | %runc%
+
+@ECHO ConsMultiCompiler.Compile('Freeoberon/Mod/Platform.Mod;Freeoberon/Mod/Scanner.Mod;Freeoberon/Mod/Errors.Mod;Freeoberon/Mod/Compiler.Mod;Freeoberon/Mod/LinkerProxy.Mod;Freeoberon/Mod/Linker.Mod;Freeoberon/Mod/Main.Mod') | %runc%
+
 @ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv Log HostFiles Math Strings Dates Unicode Meta Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders FreeoberonConfig DevLinker DevMarkers DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonPlatform FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
 
 @XCOPY/S/Q/Y/I Code BlackBox\Code >NUL
