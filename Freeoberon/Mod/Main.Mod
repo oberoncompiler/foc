@@ -131,8 +131,22 @@ END TryOpen;
 
 PROCEDURE SplitModName(IN mod: ARRAY OF CHAR;
     OUT w1, w2: ARRAY OF CHAR): BOOLEAN;
-BEGIN
-  RETURN FALSE (*!TODO*)
+VAR i, j, k: INTEGER;
+BEGIN i := 1;
+  WHILE (mod[i] # 0X) &
+    ~(('A' <= mod[i]) & (mod[i] <= 'Z') &
+    ~(('A' <= mod[i - 1]) & (mod[i - 1] <= 'Z')))
+  DO INC(i) END;
+
+  IF mod[i] # 0X THEN k := i;
+    j := 0; WHILE j < i DO w1[j] := mod[j]; INC(j) END;
+    w1[j] := 0X;
+
+    j := 0; WHILE mod[k] # 0X DO w2[j] := mod[k]; INC(j); INC(k) END;
+    w2[j] := 0X
+  END;
+
+  RETURN mod[i] # 0X
 END SplitModName;
 
 (*Находит файл модуля mod, открывает его, возвращая бегунок.
@@ -155,6 +169,10 @@ BEGIN
   END;
 
   twoWords := SplitModName(mod, w1, w2);
+  IF Config.debug THEN
+    IF twoWords THEN Out.String('ДВА СЛОВА') ELSE Out.String('ОДНО СЛОВО') END;
+    Out.String(" " + mod); Out.Ln
+  END;
 
   (* 1. В рабочем каталоге: EngineMain.Mod *)
   IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
