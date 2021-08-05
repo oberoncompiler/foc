@@ -41,11 +41,6 @@
 	@MOVE Host\Mod\__WIN_Files.Mod Host\Mod\Files.Mod >NUL
 :ENDIF8
 
-@IF NOT EXIST Freeoberon\Mod\__WIN_LinkerProxy.Mod GOTO ENDIF9
-	@MOVE Freeoberon\Mod\LinkerProxy.Mod Freeoberon\Mod\__LIN_LinkerProxy.Mod >NUL
-	@MOVE Freeoberon\Mod\__WIN_LinkerProxy.Mod Freeoberon\Mod\LinkerProxy.Mod >NUL
-:ENDIF9
-
 @SET BBEXE=BlackBox\BlackBoxInterp.exe
 @IF NOT EXIST %BBEXE% GOTO :ERRNOBB
 @SET runc=%BBEXE% /USE .
