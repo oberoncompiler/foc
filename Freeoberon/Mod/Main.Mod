@@ -248,6 +248,7 @@ BEGIN
         ELSE error := TRUE
         END
       UNTIL error OR (sym # Scan.ident)
+    ELSE error := FALSE
     END
   END;
   RETURN list
@@ -294,7 +295,7 @@ BEGIN
     IF ~error THEN
       p := list;
       WHILE ~error & (p # NIL) DO
-        IF ~InList(modules, p.name$) THEN
+        IF (p.name # 'SYSTEM') & ~InList(modules, p.name$) THEN
           IF ~Import(p.name$, FALSE) THEN error := TRUE END
         END;
         p := p.next
