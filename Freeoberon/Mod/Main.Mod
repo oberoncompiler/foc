@@ -13,6 +13,7 @@ TYPE
     fname: String; (*имя файла с исходным кодом модуля
              ЛИБО путь к каталогу, в котором находятся каталоги Code и Sym*)
     system: BOOLEAN; (*модули Files, In, Out и т. п. будут здесь TRUE*)
+    binding: BOOLEAN; (*является ли данный модуль модулем-привязкой*)
     hasSource: BOOLEAN; (*имеет ли данный модуль исходный код*)
     next: Item
   END;
@@ -23,7 +24,7 @@ VAR
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
-    system, hasSource: BOOLEAN);
+    system, hasSource, isBinding: BOOLEAN);
 VAR m, p: Item;
 BEGIN
   NEW(m);
@@ -31,6 +32,7 @@ BEGIN
   m.fname := fname$;
   m.system := system;
   m.hasSource := hasSource;
+  m.binding := isBinding;
   m.next := NIL;
   IF list = NIL THEN
     list := m
@@ -42,21 +44,6 @@ BEGIN
     p.next := m
   END
 END AddModule;
-
-(*Выводит на экран содержимое списка из глобальной переменной modules.*)
-PROCEDURE ShowModules(list: Item);
-VAR p: Item;
-BEGIN
-  Out.String('Modules: ');
-  p := list;
-  WHILE p # NIL DO
-    Out.String(p.name);
-    IF p.system THEN Out.String(' (system)') END;
-    Out.String('; ');
-    p := p.next
-  END;
-  Out.Ln
-END ShowModules;
 
 (*Есть ли модуль под названием mod в глобальном списке modules.*)
 PROCEDURE InList(list: Item; mod: ARRAY OF CHAR): BOOLEAN;
@@ -206,18 +193,24 @@ END OpenModule;
 
 (*Считывает исходный текст модуля до слова IMPORT, составляет
   список (непосредственного) импорта этого модуля, возвращает
-  его в виде списка (Item). Название модуля помещает в modName.*)
+  его в виде списка (Item). Название модуля помещает в modName.
+  В isBinding записывает TRUE, если модуль - привязка.*)
 PROCEDURE ReadImportListFromSource(r: Files.Reader; VAR error: BOOLEAN;
-    OUT modName: ARRAY OF CHAR): Item;
+    OUT modName: ARRAY OF CHAR; OUT isBinding: BOOLEAN): Item;
 VAR list: Item;
   sym: INTEGER;
   name: String;
 BEGIN
-  error := TRUE; list := NIL; Scan.Init(r); Scan.Get(sym);
+  error := TRUE; isBinding := FALSE; list := NIL;
+  Scan.Init(r); Scan.Get(sym);
   (*Доходим до MODULE*)
   WHILE (sym # Scan.eot) & (sym # Scan.module) DO Scan.Get(sym) END;
   IF sym = Scan.module THEN Scan.Get(sym);
-    IF sym = Scan.ident THEN modName := Scan.id$ END;
+    IF sym = Scan.ident THEN modName := Scan.id$; Scan.Get(sym)
+    ELSE modName := ''; error := TRUE
+    END;
+    (*Проверяем, является ли модуль модулем-привязкой*)
+    IF sym = Scan.lbrak THEN Scan.Get(sym); isBinding := TRUE END;
     (*Доходим до IMPORT*)
     WHILE (sym # Scan.eot) & (sym # Scan.import) DO Scan.Get(sym) END;
 
@@ -238,7 +231,7 @@ BEGIN
           END;
           IF ~error THEN
             IF ~InList(list, name$) THEN
-              AddModule(list, name$, '', FALSE, FALSE)
+              AddModule(list, name$, '', FALSE, FALSE, FALSE)
             ELSE error := TRUE
             END;
             IF sym = Scan.comma THEN Scan.Get(sym)
@@ -258,7 +251,7 @@ END ReadImportListFromSource;
   кодом модуля и возвращает его в виде списка (Item).
   Название модуля помещает в modName.*)
 PROCEDURE ReadImportListFromCode(r: Files.Reader; VAR error: BOOLEAN;
-    OUT modName: ARRAY OF CHAR): Item;
+    OUT modName: ARRAY OF CHAR; OUT isBinding: BOOLEAN): Item;
 VAR list: Item;
   name: String;
 BEGIN (*!TODO это заглушка*)
@@ -269,11 +262,13 @@ BEGIN (*!TODO это заглушка*)
 END ReadImportListFromCode;
 
 PROCEDURE ReadImportList(r: Files.Reader; isSource: BOOLEAN;
-    VAR error: BOOLEAN; OUT modName: ARRAY OF CHAR): Item;
+    VAR error: BOOLEAN; OUT modName: ARRAY OF CHAR;
+    OUT isBinding: BOOLEAN): Item;
 VAR list: Item;
 BEGIN
-  IF isSource THEN list := ReadImportListFromSource(r, error, modName)
-  ELSE list := ReadImportListFromCode(r, error, modName)
+  IF isSource THEN
+    list := ReadImportListFromSource(r, error, modName, isBinding)
+  ELSE list := ReadImportListFromCode(r, error, modName, isBinding)
   END;
   RETURN list
 END ReadImportList;
@@ -286,12 +281,12 @@ END ReadImportList;
 PROCEDURE Import(mod: ARRAY OF CHAR; exactFname: BOOLEAN): BOOLEAN;
 VAR list, p: Item;
   r: Files.Reader;
-  isSystem, hasSource, error: BOOLEAN;
+  isSystem, hasSource, isBinding, error: BOOLEAN;
   realModName, fname: String;
 BEGIN
   r := OpenModule(mod$, exactFname, fname, isSystem, hasSource);
   IF r # NIL THEN
-    list := ReadImportList(r, hasSource, error, realModName);
+    list := ReadImportList(r, hasSource, error, realModName, isBinding);
     IF ~error THEN
       p := list;
       WHILE ~error & (p # NIL) DO
@@ -301,7 +296,8 @@ BEGIN
         p := p.next
       END;
       IF ~error THEN
-        AddModule(modules, realModName$, fname$, isSystem, hasSource)
+        AddModule(modules, realModName$, fname$,
+          isSystem, hasSource, isBinding)
       END
     ELSE
       Out.String('Произошла ошибка при чтении списка импорта из модуля "');
@@ -359,10 +355,12 @@ VAR p, last: Item;
 BEGIN
   p := list; i := 0;
   WHILE p # NIL DO
-    j := 0;
-    WHILE p.name[j] # 0X DO s[i] := p.name[j]; INC(i); INC(j) END;
-    s[i] := ' '; INC(i);
-    last := p; p := p.next
+    IF ~p.binding THEN
+      j := 0;
+      WHILE p.name[j] # 0X DO s[i] := p.name[j]; INC(i); INC(j) END;
+      s[i] := ' '; INC(i); last := p
+    END;
+    p := p.next
   END;
   s[i - 1] := 0X;
   RETURN Linker.Link(last.name + Linker.postfix, s)
