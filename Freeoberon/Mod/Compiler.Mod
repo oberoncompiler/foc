@@ -9,14 +9,14 @@ VAR c: CHAR;
   i, tmp: INTEGER;
 BEGIN
   tmp := r.Pos();
-  pos := 1; row := 1; col := 1;
+  pos := 1; row := 1; col := 1; i := 0;
   r.SetPos(0);
   r.ReadChar(c);
   WHILE ~r.eot & (r.Pos() < tmp) DO
     IF c = 0DX THEN (* New line *)
       INC(row); col := 1; i := 0;
       INC(pos)
-    ELSIF c # 2X THEN
+    ELSIF c >= ' ' THEN
       IF (i - 1 < LEN(line)) & ((c > ' ') OR (i # 0)) THEN
         line[i] := c; INC(i)
       END;
@@ -25,7 +25,6 @@ BEGIN
     END;
     r.ReadChar(c)
   END;
-  i := col - 1;
   WHILE ~r.eot & (i - 1 < LEN(line)) & (c # 0DX) DO
     IF c >= ' ' THEN line[i] := c; INC(i) END;
     r.ReadChar(c)
