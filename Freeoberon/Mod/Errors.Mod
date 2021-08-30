@@ -72,7 +72,7 @@ BEGIN
     Out.String(' ('); OutInt(p.pos);
     Out.String(') Error #'); OutInt(p.errno);
     Out.String(': '); Out.String(p.errmsg); Out.Ln;
-    Out.String('>'); Out.String(p.line); Out.Ln;
+    Out.String('> '); Out.String(p.line); Out.Ln;
     p := p.next
   END
 END ShowList;
