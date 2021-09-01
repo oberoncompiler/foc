@@ -146,11 +146,11 @@ END SplitModName;
   Примеры mod: 'Prog', 'Prog.Mod', 'code.txt'. *)
 PROCEDURE OpenModule(mod: ARRAY OF CHAR; exactFname: BOOLEAN;
     OUT fname: ARRAY OF CHAR;
-    OUT system, hasSource: BOOLEAN): Files.Reader;
+    OUT system, hasSource, hasCode: BOOLEAN): Files.Reader;
 VAR r, r2: Files.Reader;
   w1, w2, fname2: String;
   twoWords: BOOLEAN;
-BEGIN
+BEGIN hasCode := TRUE;
   IF exactFname THEN (*!TODO*)
   ELSE MaybeRemoveExtension(mod, 'Mod')
   END;
@@ -165,9 +165,9 @@ BEGIN
   IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
   (* 2. В рабочем каталоге: Code/EngineMain.ocf   ← *)
-  ELSIF TryOpen(workDir + 'Code/' + mod + '.ocf', r, fname) &
-        TryOpen(workDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
-    system := FALSE; hasSource := FALSE
+  ELSIF TryOpen(workDir + 'Sym/' + mod + '.osf', r, fname2) THEN
+    system := FALSE; hasSource := FALSE;
+    hasCode := TryOpen(workDir + 'Code/' + mod + '.ocf', r, fname)
   (* 3. В рабочем каталоге: Engine/Main.Mod *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/' + w2 + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
@@ -175,17 +175,17 @@ BEGIN
   ELSIF twoWords & TryOpen(workDir + w1 + '/Mod/' + w2 + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
   (* 5. В рабочем каталоге: Engine/Code/Main.ocf  ← *)
-  ELSIF twoWords & TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
-                   TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
-    system := FALSE; hasSource := FALSE
+  ELSIF twoWords & TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
+    system := FALSE; hasSource := FALSE;
+    hasCode := TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r2, fname)
   (* 6. В системном каталоге: Code/EngineMain.ocf *)
-  ELSIF TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r, fname) &
-        TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r2, fname2) THEN
-    system := TRUE; hasSource := FALSE
+  ELSIF TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r, fname2) THEN
+    system := TRUE; hasSource := FALSE;
+    hasCode := TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r2, fname)
   (* 7. В системном каталоге: Engine/Code/Main.ocf *)
-  ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r, fname) &
-                   TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r2, fname2) THEN
-    system := TRUE; hasSource := FALSE
+  ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
+    system := TRUE; hasSource := FALSE;
+    hasCode := TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r2, fname)
   ELSE r := NIL
   END;
   RETURN r
@@ -281,11 +281,13 @@ END ReadImportList;
 PROCEDURE Import(mod: ARRAY OF CHAR; exactFname: BOOLEAN): BOOLEAN;
 VAR list, p: Item;
   r: Files.Reader;
-  isSystem, hasSource, isBinding, error: BOOLEAN;
+  isSystem, hasSource, hasCode, isBinding, error: BOOLEAN;
   realModName, fname: String;
-BEGIN
-  r := OpenModule(mod$, exactFname, fname, isSystem, hasSource);
-  IF r # NIL THEN
+BEGIN error := FALSE;
+  r := OpenModule(mod$, exactFname, fname, isSystem, hasSource, hasCode);
+  IF (r # NIL) & ~hasCode THEN (* Sym file returned, assume binding *)
+    AddModule(modules, mod$, fname$, isSystem, hasSource, TRUE)
+  ELSIF r # NIL THEN
     list := ReadImportList(r, hasSource, error, realModName, isBinding);
     IF ~error THEN
       p := list;
@@ -355,7 +357,7 @@ VAR p, last: Item;
 BEGIN
   p := list; i := 0;
   WHILE p # NIL DO
-    IF ~p.binding THEN
+    IF ~p.binding & (p.name # 'Kernel') THEN
       j := 0;
       WHILE p.name[j] # 0X DO s[i] := p.name[j]; INC(i); INC(j) END;
       s[i] := ' '; INC(i); last := p
@@ -404,7 +406,7 @@ BEGIN
 
   workDir := '';
   Platform.GetAppDir(dir);
-  Config.SetSysDir(dir + 'BlackBox/');
+  Config.SetSysDir(dir + 'Lib/');
   HostFiles.IgnoreAsk
 END Init;
 

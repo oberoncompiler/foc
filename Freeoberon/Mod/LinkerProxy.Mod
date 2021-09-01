@@ -10,7 +10,7 @@ VAR
 
 PROCEDURE Link*;
 BEGIN
-  Dev2Linker1.LinkElf; (*Windows: DevLinker.Link*)
+  Dev2Linker1.LinkElfExe; (*Windows: DevLinker.Link*)
 
   error := Dev2LnkBase.error
 END Link;
