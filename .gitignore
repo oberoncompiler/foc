@@ -10,3 +10,7 @@
 /Host/Sym
 /Main
 /Main.exe
+/tests/*/Code
+/tests/*/Sym
+/tests/*/Prog1
+/tests/fulltest/Lin
