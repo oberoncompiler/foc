@@ -164,28 +164,32 @@ BEGIN hasCode := TRUE;
   (* 1. В рабочем каталоге: EngineMain.Mod *)
   IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
-  (* 2. В рабочем каталоге: Code/EngineMain.ocf   ← *)
+  (* 2. В рабочем каталоге: Sym/EngineMain.osf   ← *)
   ELSIF TryOpen(workDir + 'Sym/' + mod + '.osf', r, fname2) THEN
     system := FALSE; hasSource := FALSE;
-    hasCode := TryOpen(workDir + 'Code/' + mod + '.ocf', r, fname)
+    hasCode := TryOpen(workDir + 'Code/' + mod + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
   (* 3. В рабочем каталоге: Engine/Main.Mod *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/' + w2 + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
   (* 4. В рабочем каталоге: Engine/Mod/Main.Mod *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/Mod/' + w2 + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
-  (* 5. В рабочем каталоге: Engine/Code/Main.ocf  ← *)
+  (* 5. В рабочем каталоге: Engine/Sym/Main.osf  ← *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
     system := FALSE; hasSource := FALSE;
-    hasCode := TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r2, fname)
-  (* 6. В системном каталоге: Code/EngineMain.ocf *)
+    hasCode := TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
+  (* 6. В системном каталоге: Sym/EngineMain.osf *)
   ELSIF TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r, fname2) THEN
     system := TRUE; hasSource := FALSE;
-    hasCode := TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r2, fname)
-  (* 7. В системном каталоге: Engine/Code/Main.ocf *)
+    hasCode := TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
+  (* 7. В системном каталоге: Engine/Sym/Main.osf *)
   ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
     system := TRUE; hasSource := FALSE;
-    hasCode := TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r2, fname)
+    hasCode := TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
   ELSE r := NIL
   END;
   RETURN r
@@ -256,8 +260,11 @@ VAR list: Item;
   name: String;
 BEGIN (*!TODO это заглушка*)
   error := FALSE;
+  modName := 'Out';
+  isBinding := FALSE;
   list := NIL;
-  modName := 'Log';
+  IF ZZ = 0 THEN modName := 'Utf' ELSE AddModule(list, 'Utf', '', FALSE, FALSE, FALSE) END;
+  INC(ZZ);
   RETURN list
 END ReadImportListFromCode;
 
@@ -286,13 +293,20 @@ VAR list, p: Item;
 BEGIN error := FALSE;
   r := OpenModule(mod$, exactFname, fname, isSystem, hasSource, hasCode);
   IF (r # NIL) & ~hasCode THEN (* Sym file returned, assume binding *)
+    Out.String(' - assume binding -'); Out.Ln;
     AddModule(modules, mod$, fname$, isSystem, hasSource, TRUE)
   ELSIF r # NIL THEN
+    Out.String(' - assume module -'); Out.Ln;
     list := ReadImportList(r, hasSource, error, realModName, isBinding);
     IF ~error THEN
+    
+      Out.String(' - import list read - ');
+      p := list; WHILE p # NIL DO Out.String(p.name); Out.String(', '); p := p.next END; Out.Ln;
+
       p := list;
       WHILE ~error & (p # NIL) DO
-        IF (p.name # 'SYSTEM') & ~InList(modules, p.name$) THEN
+        IF (p.name # 'SYSTEM') & (p.name # 'COM') &
+           ~InList(modules, p.name$) THEN
           IF ~Import(p.name$, FALSE) THEN error := TRUE END
         END;
         p := p.next
@@ -361,6 +375,8 @@ BEGIN
       j := 0;
       WHILE p.name[j] # 0X DO s[i] := p.name[j]; INC(i); INC(j) END;
       s[i] := ' '; INC(i); last := p
+    ELSE
+      Out.String('BINDING '); Out.String(p.name); Out.Ln
     END;
     p := p.next
   END;

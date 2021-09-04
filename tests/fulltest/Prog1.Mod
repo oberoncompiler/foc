@@ -9,6 +9,6 @@ BEGIN
   END;
   s[N] := 0X;
   Out.String(s);
-  Out.Ln2;
+  Out.Ln;
   FOR i := 1 TO 5 DO Mod1.P END
 END Prog1.
