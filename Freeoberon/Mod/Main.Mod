@@ -263,8 +263,6 @@ BEGIN (*!TODO это заглушка*)
   modName := 'Out';
   isBinding := FALSE;
   list := NIL;
-  IF ZZ = 0 THEN modName := 'Utf' ELSE AddModule(list, 'Utf', '', FALSE, FALSE, FALSE) END;
-  INC(ZZ);
   RETURN list
 END ReadImportListFromCode;
 
