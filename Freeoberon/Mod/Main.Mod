@@ -164,28 +164,38 @@ BEGIN hasCode := TRUE;
   (* 1. В рабочем каталоге: EngineMain.Mod *)
   IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
-  (* 2. В рабочем каталоге: Sym/EngineMain.osf   ← *)
+  (* 2. В рабочем каталоге: Linux/EngineMain.Mod *)
+  ELSIF TryOpen(workDir + Config.curOs + '/' + mod + '.Mod', r, fname) THEN
+    system := FALSE; hasSource := TRUE
+  (* 3. В рабочем каталоге: Linux/Sym/EngineMain.osf *)
+  ELSIF TryOpen(workDir + Config.curOs + '/Sym/' + mod + '.osf', r, fname2) THEN
+    system := FALSE; hasSource := FALSE;
+    hasCode := TryOpen(workDir + Config.curOs + '/Code/' + mod + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
+  (* 4. В рабочем каталоге: Sym/EngineMain.osf *)
   ELSIF TryOpen(workDir + 'Sym/' + mod + '.osf', r, fname2) THEN
     system := FALSE; hasSource := FALSE;
     hasCode := TryOpen(workDir + 'Code/' + mod + '.ocf', r2, fname);
     IF hasCode THEN r := r2 END
-  (* 3. В рабочем каталоге: Engine/Main.Mod *)
+  (* 5. В рабочем каталоге: Engine/Main.Mod *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/' + w2 + '.Mod', r, fname) THEN
     system := FALSE; hasSource := TRUE
-  (* 4. В рабочем каталоге: Engine/Mod/Main.Mod *)
-  ELSIF twoWords & TryOpen(workDir + w1 + '/Mod/' + w2 + '.Mod', r, fname) THEN
-    system := FALSE; hasSource := TRUE
-  (* 5. В рабочем каталоге: Engine/Sym/Main.osf  ← *)
+  (* 6. В рабочем каталоге: Engine/Sym/Main.osf *)
   ELSIF twoWords & TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
     system := FALSE; hasSource := FALSE;
     hasCode := TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
     IF hasCode THEN r := r2 END
-  (* 6. В системном каталоге: Sym/EngineMain.osf *)
+  (* 7. В системном каталоге: Sym/EngineMain.osf *)
   ELSIF TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r, fname2) THEN
     system := TRUE; hasSource := FALSE;
     hasCode := TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r2, fname);
     IF hasCode THEN r := r2 END
-  (* 7. В системном каталоге: Engine/Sym/Main.osf *)
+  (* 8. В системном каталоге: Linux/Sym/EngineMain.osf *)
+  ELSIF TryOpen(Config.sysDir + Config.curOs + '/Sym/' + mod + '.osf', r, fname2) THEN
+    system := TRUE; hasSource := FALSE;
+    hasCode := TryOpen(Config.sysDir + Config.curOs + '/Code/' + mod + '.ocf', r2, fname);
+    IF hasCode THEN r := r2 END
+  (* 9. В системном каталоге: Engine/Sym/Main.osf *)
   ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
     system := TRUE; hasSource := FALSE;
     hasCode := TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
@@ -258,11 +268,37 @@ PROCEDURE ReadImportListFromCode(r: Files.Reader; VAR error: BOOLEAN;
     OUT modName: ARRAY OF CHAR; OUT isBinding: BOOLEAN): Item;
 VAR list: Item;
   name: String;
-BEGIN (*!TODO это заглушка*)
-  error := FALSE;
-  modName := 'Out';
+  x: BYTE;
+  n, i: INTEGER;
+BEGIN
+  r.SetPos(1CH);
+  r.ReadByte(x);
+  n := x;
   isBinding := FALSE;
+
+  i := 0; x := 1;
+  WHILE ~r.eof & (x # 0) DO
+    r.ReadByte(x);
+    modName[i] := CHR(x);
+    INC(i)
+  END;
+
   list := NIL;
+  WHILE ~r.eof & (n # 0) DO
+    i := 0;
+    r.ReadByte(x);
+    WHILE ~r.eof & (x # 0) DO
+      name[i] := CHR(x);
+      INC(i);
+      r.ReadByte(x)
+    END;  
+    name[i] := 0X;
+    IF name[0] # '$' THEN 
+      AddModule(list, name, '', FALSE, FALSE, FALSE)
+    END;
+    DEC(n)
+  END;
+
   RETURN list
 END ReadImportListFromCode;
 
@@ -336,9 +372,10 @@ BEGIN
   IF Config.debug THEN
     Out.String('ИНФОРМАЦИЯ О МОДУЛЕ ' + p.name); Out.Ln;
     Out.String('  fname     = ' + p.fname); Out.Ln;
-    Out.String('  system    = '); IF p.system THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
-    Out.String('  hasSource = '); IF p.hasSource THEN Out.Char('Д') ELSE Out.Char('Н') END; Out.Ln;
-    Out.Ln
+    Out.String('  system    = ');
+    IF p.system THEN Out.Char('Y') ELSE Out.Char('N') END; Out.Ln;
+    Out.String('  hasSource = ');
+    IF p.hasSource THEN Out.Char('Y') ELSE Out.Char('N') END; Out.Ln
   END
 END OutInfo;
 
@@ -410,7 +447,7 @@ BEGIN
 END Do;
 
 PROCEDURE Init;
-VAR dir: ARRAY 1000 OF CHAR;
+VAR s: ARRAY 1000 OF CHAR;
 BEGIN
   Converters.Register('Documents.ImportDocument',
     'Documents.ExportDocument', '', 'odc', {});
@@ -419,8 +456,8 @@ BEGIN
     {Converters.importAll});
 
   workDir := '';
-  Platform.GetAppDir(dir);
-  Config.SetSysDir(dir + 'Lib/');
+  Platform.GetAppDir(s); Config.SetSysDir(s + 'Lib/');
+  Config.SetCurOs(Platform.os);
   HostFiles.IgnoreAsk
 END Init;
 

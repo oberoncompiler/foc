@@ -5,8 +5,6 @@ IMPORT
   Log, Config := FreeoberonConfig;
 
 CONST
-  debug = FALSE;
-
   NewRecFP = 4E27A847H;
   NewArrFP = 76068C78H;
 
@@ -115,34 +113,59 @@ END TimeStamp;
 
 PROCEDURE ThisFile (modname: ARRAY OF CHAR): Files.File;
   VAR dir, name: Files.Name; loc: Files.Locator; f: Files.File;
+  (*CODE ADDED BEGIN*)
+  fullname: ARRAY 200 OF CHAR;
+  (*CODE ADDED END*)
 BEGIN
-  IF debug THEN Log.String('READING "' + modname + '" -> "') END;
   Kernel.SplitName(modname, dir, name);
   Kernel.MakeFileName(name, Kernel.objType);
-  IF debug THEN Log.String("dir=" + dir + "; ") END;
-  IF debug THEN Log.String("OFdir=" + OFdir + "; ") END;
-  loc := Files.dir.This(dir); loc := loc.This(OFdir);
-  IF debug THEN Log.String(name + '"... ') END;
-  f := Files.dir.Old(loc, name, TRUE);
-  IF (f = NIL) & (dir = "") THEN
-    loc := Files.dir.This(SYSdir); loc := loc.This(OFdir);
+
+  (*CODE ADDED BEGIN*)
+  fullname := modname$;
+  Kernel.MakeFileName(fullname, Kernel.objType);
+
+  (* 3. В рабочем каталоге: Linux/Code/EngineMain.ocf *)
+  loc := Files.dir.This(Config.curOs);
+  loc := loc.This(OFdir);
+  f := Files.dir.Old(loc, fullname$, TRUE);
+
+  (* 4. В рабочем каталоге: Code/EngineMain.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(OFdir);
+    f := Files.dir.Old(loc, fullname$, TRUE)
+  END;
+
+  (* 6. В рабочем каталоге: Engine/Code/Main.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(dir);
+    loc := loc.This(OFdir);
     f := Files.dir.Old(loc, name, TRUE)
   END;
+
+  (* 7. В системном каталоге: Code/EngineMain.ocf *)
   IF f = NIL THEN
     loc := Files.dir.This(Config.sysDir);
-    loc := loc.This(dir); loc := loc.This(OFdir);
-    IF debug THEN Log.String('[TRY SYSDIR] ... ') END;
-    f := Files.dir.Old(loc, name, TRUE);
-    IF (f = NIL) & (dir = "") THEN
-      loc := Files.dir.This(Config.sysDir);
-      loc := loc.This(SYSdir); loc := loc.This(OFdir);
-      f := Files.dir.Old(loc, name, TRUE)
-    END
+    loc := loc.This(OFdir);
+    f := Files.dir.Old(loc, fullname$, TRUE)
   END;
-  IF debug THEN
-    IF (f = NIL) THEN Log.String('FAIL---------') ELSE Log.String('OK') END;
-    Log.Ln
+
+  (* 8. В системном каталоге: Linux/Code/EngineMain.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(Config.sysDir);
+    loc := loc.This(Config.curOs);
+    loc := loc.This(OFdir);
+    f := Files.dir.Old(loc, name, TRUE)
   END;
+
+  (* 9. В системном каталоге: Engine/Code/Main.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(Config.sysDir);
+    loc := loc.This(dir);
+    loc := loc.This(OFdir);
+    f := Files.dir.Old(loc, name, TRUE)
+  END;
+  (*CODE ADDED END*)
+
   RETURN f
 END ThisFile;
 

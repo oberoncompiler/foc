@@ -661,33 +661,77 @@ BEGIN
   RETURN inSym.eof
 END eofSF;
 
-(*!TODO REPLACE THIS*)
 PROCEDURE OldSym* (IN modName: ARRAY OF SHORTCHAR; VAR done: BOOLEAN);
 VAR tag, res: INTEGER; loc: Files.Locator; dir, name: Files.Name;
+  (*CODE ADDED BEGIN*)
+  name2: Files.Name;
+  (*CODE ADDED END*)
 BEGIN
   done := FALSE;
   IF modName = "@file" THEN
     oldSymFile := file
   ELSE
-    Utf.Utf8ToString(modName, name, res); Kernel.SplitName(name, dir, name);
-    Kernel.MakeFileName(name, Kernel.symType); 
-    loc := Files.dir.This(dir); loc := loc.This(symDir);
-    oldSymFile := Files.dir.Old(loc, name, Files.shared);
-    IF (oldSymFile = NIL) & (dir = "") THEN
-      loc := Files.dir.This(SYSdir); loc := loc.This(symDir);
-      oldSymFile := Files.dir.Old(loc, name, Files.shared)
-    END
+    Utf.Utf8ToString(modName, name2, res); Kernel.SplitName(name2, dir, name);
+    Kernel.MakeFileName(name, Kernel.symType);
+
+    (*CODE ADDED BEGIN*)
+    Kernel.MakeFileName(name2, Kernel.symType);
+
+    (* 3. В рабочем каталоге: Linux/Sym/EngineMain.ocf *)
+    loc := Files.dir.This(Config.curOs);
+    loc := loc.This(SFdir);
+    oldSymFile := Files.dir.Old(loc, name2, TRUE);
+
+    (* 4. В рабочем каталоге: Sym/EngineMain.ocf *)
+    IF oldSymFile = NIL THEN
+      loc := Files.dir.This(SFdir);
+      oldSymFile := Files.dir.Old(loc, name2, TRUE)
+    END;
+
+    (* 6. В рабочем каталоге: Engine/Sym/Main.ocf *)
+    IF oldSymFile = NIL THEN
+      loc := Files.dir.This(dir);
+      loc := loc.This(SFdir);
+      oldSymFile := Files.dir.Old(loc, name, TRUE)
+    END;
+
+    (* 7. В системном каталоге: Sym/EngineMain.ocf *)
+    IF oldSymFile = NIL THEN
+      loc := Files.dir.This(Config.sysDir);
+      loc := loc.This(SFdir);
+      oldSymFile := Files.dir.Old(loc, name2, TRUE)
+    END;
+
+    (* 8. В системном каталоге: Linux/Sym/EngineMain.ocf *)
+    IF oldSymFile = NIL THEN
+      loc := Files.dir.This(Config.sysDir);
+      loc := loc.This(Config.curOs);
+      loc := loc.This(SFdir);
+      oldSymFile := Files.dir.Old(loc, name2, TRUE)
+    END;
+
+    (* 9. В системном каталоге: Engine/Sym/Main.ocf *)
+    IF oldSymFile = NIL THEN
+      loc := Files.dir.This(Config.sysDir);
+      loc := Files.dir.This(dir);
+      loc := loc.This(SFdir);
+      oldSymFile := Files.dir.Old(loc, name, TRUE)
+    END;
+    (*CODE ADDED END*)
+
   END;
 
-  (*CODE ADDED BEGIN*)
+  (* Fallback BEGIN
+  loc := Files.dir.This(dir); loc := loc.This(symDir);
+  oldSymFile := Files.dir.Old(loc, name, Files.shared);
+  IF (oldSymFile = NIL) & (dir = "") THEN
+    loc := Files.dir.This(SYSdir); loc := loc.This(symDir);
+    oldSymFile := Files.dir.Old(loc, name, Files.shared)
+  END;
+
   IF oldSymFile = NIL THEN
     loc := Files.dir.This(Config.sysDir);
-    IF Config.debug THEN Out.String('   CPM: Config.sysDir=' + Config.sysDir) END;
     loc := loc.This(dir); loc := loc.This(symDir);
-    IF Config.debug THEN
-      Out.String('  dir=' + dir); Out.String('   symDir=' + symDir);
-      Out.String('  name=' + name); Out.Ln
-    END;
     oldSymFile := Files.dir.Old(loc, name, Files.shared);
     IF (oldSymFile = NIL) & (dir = "") THEN
       loc := Files.dir.This(Config.sysDir);
@@ -695,7 +739,7 @@ BEGIN
       oldSymFile := Files.dir.Old(loc, name, Files.shared)
     END
   END;
-  (*CODE ADDED END*)
+  Fallback END *)
 
   IF oldSymFile # NIL THEN
     inSym := oldSymFile.NewReader(inSym);
@@ -749,9 +793,17 @@ END SymReset;
 PROCEDURE NewSym* (IN modName: ARRAY OF SHORTCHAR);
   VAR res: INTEGER; loc: Files.Locator; dir: Files.Name;
 BEGIN
-  Utf.Utf8ToString(modName, ObjFName, res); Kernel.SplitName(ObjFName, dir, ObjFName);
-  loc := Files.dir.This(dir); loc := loc.This(symDir);
+  (*!TODO use Config.os*)
+  Utf.Utf8ToString(modName, ObjFName, res);
+
+  (* CODE EDIT BEGIN *)
+  IF Config.isOsFile THEN loc := Files.dir.This(Config.curOs)
+  ELSE Kernel.SplitName(ObjFName, dir, ObjFName); loc := Files.dir.This(dir)
+  END;
+  loc := loc.This(symDir);
   symFile := Files.dir.New(loc, Files.ask);
+  (* CODE EDIT END *)
+
   IF symFile # NIL THEN
     outSym := symFile.NewWriter(NIL);
     WriteLInt(outSym, SFtag)
@@ -823,9 +875,16 @@ PROCEDURE NewObj* (IN modName: ARRAY OF SHORTCHAR);
   VAR res: INTEGER; loc: Files.Locator; dir: Files.Name;
 BEGIN
   errpos := 0;
-  Utf.Utf8ToString(modName, ObjFName, res); Kernel.SplitName(ObjFName, dir, ObjFName);
-  loc := Files.dir.This(dir); loc := loc.This(codeDir);
+  Utf.Utf8ToString(modName, ObjFName, res);
+
+  (* CODE EDIT BEGIN *)
+  IF Config.isOsFile THEN loc := Files.dir.This(Config.curOs)
+  ELSE Kernel.SplitName(ObjFName, dir, ObjFName); loc := Files.dir.This(dir)
+  END;
+  loc := loc.This(codeDir);
   objFile := Files.dir.New(loc, Files.ask);
+  (* CODE EDIT END *)
+
   IF objFile # NIL THEN
     outObj := objFile.NewWriter(NIL);
     WriteLInt(outObj, OFtag)

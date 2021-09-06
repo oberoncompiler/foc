@@ -1,7 +1,7 @@
 MODULE FreeoberonCompiler;
 
 IMPORT Out := Log, DevCompiler, DevMarkers, TextModels, TextViews,
-  Views, Files, Errors := FreeoberonErrors;
+  Views, Files, Errors := FreeoberonErrors, Config := FreeoberonConfig;
 
 PROCEDURE PosToLine(r: TextModels.Reader; OUT pos, row, col: INTEGER;
     OUT line: ARRAY OF CHAR);
@@ -66,10 +66,19 @@ VAR loc: Files.Locator;
   v: Views.View;
   src: TextModels.Model;
   error: BOOLEAN;
+  i: INTEGER;
 BEGIN
   error := TRUE;
   loc := Files.dir.This('');
   IF loc.res = 0 THEN
+    
+    i := 0;
+    WHILE (Config.curOs[i] # 0X) & (Config.curOs[i] = fname[i]) DO INC(i) END;
+    Config.SetOsFile((Config.curOs[i] = 0X) & (fname[i] = '/'));
+
+    Out.String(' OPEN VIEW "' + fname + '".      OSFILE = ');
+    IF Config.isOsFile THEN Out.String('TRUE') ELSE Out.String('FALSE') END; Out.Ln;
+
     v := Views.OldView(loc, fname$);
     IF v # NIL THEN
       WITH v: TextViews.View DO
