@@ -4,6 +4,12 @@ IMPORT Compiler := FreeoberonCompiler, Scan := FreeoberonScanner,
   Config := FreeoberonConfig, Platform := FreeoberonPlatform,
   Converters, Out := Log, Files, HostFiles, Args;
 
+CONST
+  (* Константы для OpenFile *)
+  modFile  = 0;
+  symFile  = 1;
+  codeFile = 2;
+
 TYPE
   String = ARRAY 255 OF CHAR;
 
@@ -100,40 +106,60 @@ BEGIN
   RETURN F
 END FileOld;
 
-(*Открывает файл fname, возвращает TRUE, записывает бегунок в r,
-  а fname копирует в fname2 (для удобства).
-  В случае ошибки возвращает FALSE.*)
-PROCEDURE TryOpen(IN fname: ARRAY OF CHAR; OUT r: Files.Reader;
-    OUT fname2: ARRAY OF CHAR): BOOLEAN;
+(** Открывает файл, имя которого конструируется по специальному алгоритму,
+    опирающемуся на useSysDir, useFolder, useOs, ftype, mod, w1 и w2. В случае
+    успеха возвращает TRUE, записывает бегунок в r, в fname записывает путь к
+    файлу. В случае провала не меняет значения бегунка r и параметра fname. *)
+PROCEDURE OpenFile(IN mod, w1, w2: ARRAY OF CHAR;
+    useSysDir, useFolder, useOs: BOOLEAN; ftype: INTEGER;
+    VAR fname: ARRAY OF CHAR; VAR r: Files.Reader): BOOLEAN;
 VAR F: Files.File;
-BEGIN
-  IF Config.debug THEN Out.String('ПРОБУЮ "' + fname + '"') END;
-  F := FileOld(fname$);
-  IF F # NIL THEN r := F.NewReader(NIL); fname2 := fname$ END;
-  IF Config.debug THEN
-    IF r # NIL THEN Out.String(' - ЕСТЬ') END; Out.Ln
-  END;
-  RETURN r # NIL
-END TryOpen;
+  r2: Files.Reader;
+  s: ARRAY 1024 OF CHAR;
+BEGIN r2 := NIL;
+  IF useSysDir THEN s := Config.sysDir$ ELSE s := '' END;
+  IF ftype # modFile THEN s := s + '_Build/' END;
+  IF useFolder THEN s := s + w1 + '/' + w2 ELSE s := s + mod END;
+  IF useOs THEN s := s + '-' + Config.curOs END;
 
+  IF ftype = modFile THEN s := s + '.Mod'
+  ELSIF ftype = symFile THEN s := s + '.sym'
+  ELSE s := s + '.ocf'
+  END;
+
+  IF Config.debug THEN Out.String('ПРОБУЮ "' + s + '"') END;
+  F := FileOld(s$);
+  IF F # NIL THEN
+    IF Config.debug THEN Out.String(' - О!') END;
+    r2 := F.NewReader(NIL);
+    IF r2 # NIL THEN r := r2; fname := s$ END
+  END;
+  IF Config.debug THEN IF r2 # NIL THEN Out.String(' - УДАЛОСЬ') END; Out.Ln END;
+  RETURN r2 # NIL
+END OpenFile;
+
+(** Помещает в w1 и w2 две части имени модуля. Если имя состоит из одной части,
+    просто дублирует его в w1 и w2.
+Пример: 'GameScripts' -> ['Game', 'Scripts'].
+        'Allegro5' -> ['Allegro5', 'Allegro5']. *)
 PROCEDURE SplitModName(IN mod: ARRAY OF CHAR;
-    OUT w1, w2: ARRAY OF CHAR): BOOLEAN;
+    OUT w1, w2: ARRAY OF CHAR);
 VAR i, j, k: INTEGER;
 BEGIN i := 1;
+  (* i := position of the first capital letter that
+     follows a non-capital letter. *)
   WHILE (mod[i] # 0X) &
     ~(('A' <= mod[i]) & (mod[i] <= 'Z') &
-    ~(('A' <= mod[i - 1]) & (mod[i - 1] <= 'Z')))
+      ~(('A' <= mod[i - 1]) & (mod[i - 1] <= 'Z')))
   DO INC(i) END;
 
-  IF mod[i] # 0X THEN k := i;
-    j := 0; WHILE j < i DO w1[j] := mod[j]; INC(j) END;
-    w1[j] := 0X;
-
-    j := 0; WHILE mod[k] # 0X DO w2[j] := mod[k]; INC(j); INC(k) END;
-    w2[j] := 0X
-  END;
-
-  RETURN mod[i] # 0X
+  (* Copy first part (or the whole name) into w1 *)
+  j := 0; WHILE j < i DO w1[j] := mod[j]; INC(j) END;
+  w1[j] := 0X;
+  (* Copy second part (or the whole name again) into w2 *)
+  IF mod[i] = 0X THEN k := 0 ELSE k := i; END;
+  j := 0; WHILE mod[k] # 0X DO w2[j] := mod[k]; INC(j); INC(k) END;
+  w2[j] := 0X
 END SplitModName;
 
 (*Находит файл модуля mod, открывает его, возвращая бегунок.
@@ -147,60 +173,52 @@ END SplitModName;
 PROCEDURE OpenModule(mod: ARRAY OF CHAR; exactFname: BOOLEAN;
     OUT fname: ARRAY OF CHAR;
     OUT system, hasSource, hasCode: BOOLEAN): Files.Reader;
-VAR r, r2: Files.Reader;
-  w1, w2, fname2: String;
-  twoWords: BOOLEAN;
-BEGIN hasCode := TRUE;
+VAR r: Files.Reader;
+  w1, w2: String;
+BEGIN r := NIL;
   IF exactFname THEN (*!TODO*)
   ELSE MaybeRemoveExtension(mod, 'Mod')
   END;
 
-  twoWords := SplitModName(mod, w1, w2);
+  SplitModName(mod, w1, w2);
   IF Config.debug THEN
-    IF twoWords THEN Out.String('ДВА СЛОВА') ELSE Out.String('ОДНО СЛОВО') END;
-    Out.String(" " + mod); Out.Ln
+    Out.String(mod); Out.String(' разбито на '); Out.String(w1);
+    Out.String(' и '); Out.String(w2); Out.Ln
   END;
 
-  (* 1. В рабочем каталоге: EngineMain.Mod *)
-  IF TryOpen(workDir + mod + '.Mod', r, fname) THEN
-    system := FALSE; hasSource := TRUE
-  (* 2. В рабочем каталоге: Linux/EngineMain.Mod *)
-  ELSIF TryOpen(workDir + Config.curOs + '/' + mod + '.Mod', r, fname) THEN
-    system := FALSE; hasSource := TRUE
-  (* 3. В рабочем каталоге: Linux/Sym/EngineMain.osf *)
-  ELSIF TryOpen(workDir + Config.curOs + '/Sym/' + mod + '.osf', r, fname2) THEN
+  (*                   |sysdir|folder|use OS| *)
+  (* 1. TableBox.Mod   |      |      |      | *)
+  IF    OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, modFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 2. TableBox-Linux.Mod *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , modFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 3. Table/Box.Mod или Oneword/Oneword.Mod *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , FALSE, modFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 4. Table/Box-Linux.Mod или Oneword/Oneword-Linux.Mod *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , modFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 5. _Build/TableBox.sym *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, symFile, fname, r) THEN
     system := FALSE; hasSource := FALSE;
-    hasCode := TryOpen(workDir + Config.curOs + '/Code/' + mod + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  (* 4. В рабочем каталоге: Sym/EngineMain.osf *)
-  ELSIF TryOpen(workDir + 'Sym/' + mod + '.osf', r, fname2) THEN
+    (* 5a. _Build/TableBox.ocf *)
+    hasCode := OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, codeFile, fname, r)
+  (* 6. _Build/TableBox-Linux.sym *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , symFile, fname, r) THEN
     system := FALSE; hasSource := FALSE;
-    hasCode := TryOpen(workDir + 'Code/' + mod + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  (* 5. В рабочем каталоге: Engine/Main.Mod *)
-  ELSIF twoWords & TryOpen(workDir + w1 + '/' + w2 + '.Mod', r, fname) THEN
-    system := FALSE; hasSource := TRUE
-  (* 6. В рабочем каталоге: Engine/Sym/Main.osf *)
-  ELSIF twoWords & TryOpen(workDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
-    system := FALSE; hasSource := FALSE;
-    hasCode := TryOpen(workDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  (* 7. В системном каталоге: Sym/EngineMain.osf *)
-  ELSIF TryOpen(Config.sysDir + 'Sym/' + mod + '.osf', r, fname2) THEN
+    (* 6a. _Build/TableBox-Linux.ocf *)
+    hasCode := OpenFile(mod, w1, w2, FALSE, FALSE, TRUE, codeFile, fname, r)
+  (* 7. SYSDIR/_Build/TableBox.sym *)
+  ELSIF OpenFile(mod, w1, w2, TRUE , FALSE, FALSE, symFile, fname, r) THEN
     system := TRUE; hasSource := FALSE;
-    hasCode := TryOpen(Config.sysDir + 'Code/' + mod + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  (* 8. В системном каталоге: Linux/Sym/EngineMain.osf *)
-  ELSIF TryOpen(Config.sysDir + Config.curOs + '/Sym/' + mod + '.osf', r, fname2) THEN
+    (* 7a. _Build/TableBox.ocf *)
+    hasCode := OpenFile(mod, w1, w2, TRUE, FALSE, FALSE, codeFile, fname, r)
+  (* 8. SYSDIR/_Build/TableBox-Linux.sym *)
+  ELSIF OpenFile(mod, w1, w2, TRUE , FALSE, TRUE , symFile, fname, r) THEN
     system := TRUE; hasSource := FALSE;
-    hasCode := TryOpen(Config.sysDir + Config.curOs + '/Code/' + mod + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  (* 9. В системном каталоге: Engine/Sym/Main.osf *)
-  ELSIF twoWords & TryOpen(Config.sysDir + w1 + '/Sym/' + w2 + '.osf', r, fname2) THEN
-    system := TRUE; hasSource := FALSE;
-    hasCode := TryOpen(Config.sysDir + w1 + '/Code/' + w2 + '.ocf', r2, fname);
-    IF hasCode THEN r := r2 END
-  ELSE r := NIL
+    (* 8a. _Build/TableBox-Linux.ocf *)
+    hasCode := OpenFile(mod, w1, w2, TRUE, FALSE, TRUE, codeFile, fname, r)
   END;
   RETURN r
 END OpenModule;
@@ -326,7 +344,7 @@ VAR list, p: Item;
   realModName, fname: String;
 BEGIN error := FALSE;
   r := OpenModule(mod$, exactFname, fname, isSystem, hasSource, hasCode);
-  IF (r # NIL) & ~hasCode THEN (* Sym file returned, assume binding *)
+  IF (r # NIL) & ~hasSource & ~hasCode THEN (* Sym file returned, assume binding *)
     Out.String(' - assume binding -'); Out.Ln;
     AddModule(modules, mod$, fname$, isSystem, hasSource, TRUE)
   ELSIF r # NIL THEN
