@@ -2,10 +2,12 @@ MODULE FreeoberonPlatform;
 
 IMPORT HostEnv;
 
+CONST os* = 'Win';
+
 PROCEDURE GetAppDir*(OUT dir: ARRAY OF CHAR);
 VAR s: ARRAY 1000 OF CHAR;
   c: CHAR;
-  res, i: INTEGER;
+  i, res: INTEGER;
 BEGIN
   HostEnv.GetPar('_', s, res);
   s[LEN(s) - 1] := 0X;
