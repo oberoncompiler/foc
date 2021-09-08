@@ -1,18 +1,18 @@
-MODULE FreeoberonLinkerProxy; (* Windows version *)
-IMPORT DevLinker;
+MODULE FreeoberonLinkerProxy; (* Linux version *)
+IMPORT Dev2Linker1, Dev2LnkBase; (*Windows: DevLinker*)
 
 CONST
-  os* = 'dos';
-  postfix* = '.exe';
+  os* = 'Linux'; (*Windows: dos*)
+  postfix* = ''; (*Windows: exe*)
 
 VAR
   error*: BOOLEAN;
 
 PROCEDURE Link*;
 BEGIN
-  DevLinker.Link;
+  Dev2Linker1.LinkElfExe; (*Windows: DevLinker.Link*)
 
-  error := DevLinker.error
+  error := Dev2LnkBase.error
 END Link;
 
 END FreeoberonLinkerProxy.
