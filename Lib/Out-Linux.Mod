@@ -1,4 +1,4 @@
-MODULE Out;
+MODULE Out; (* Linux *)
 
 IMPORT Utf, Libc := LinLibc;
 

@@ -53,14 +53,6 @@
 
 @ECHO DevLinker.Link dos foc.exe := Kernel$+ Files HostEnv Log HostFiles Math Strings Dates Unicode Meta Dialog Services Fonts Ports Utf Stores Converters Sequencers Models Printers Views Controllers Properties Printing Mechanisms Containers Documents Windows Console StdInterpreter HostConsole HostRegistry HostFonts HostWindows HostDates HostDialog StdDialog HostLang TextModels TextRulers TextSetters TextViews TextControllers TextMappers StdApi StdCmds StdLinks HostTextConv Args HostArgs StdLog ConsLog StdCFrames Controls DevCommanders FreeoberonConfig DevLinker DevMarkers DevCPM DevCPT DevCPB DevCPS DevCPP DevCPE DevCPH DevCPL486 DevCPC486 DevCPV486 DevSelectors DevCompiler FreeoberonPlatform FreeoberonScanner FreeoberonLinkerProxy FreeoberonLinker FreeoberonErrors FreeoberonCompiler FreeoberonMain | %runc%
 
-@XCOPY/S/Q/Y/I Code BlackBox\Code >NUL
-@XCOPY/S/Q/Y/I Dev BlackBox\Dev >NUL
-@XCOPY/S/Q/Y/I Dev2 BlackBox\Dev2 >NUL
-@XCOPY/S/Q/Y/I Freeoberon BlackBox\Freeoberon >NUL
-@XCOPY/S/Q/Y/I Host BlackBox\Host >NUL
-@XCOPY/S/Q/Y/I System BlackBox\System >NUL
-@XCOPY/S/Q/Y/I Sym BlackBox\Sym >NUL
-
 @GOTO :ENDPROG
 
 :CLEAN

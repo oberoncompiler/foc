@@ -114,56 +114,52 @@ END TimeStamp;
 PROCEDURE ThisFile (modname: ARRAY OF CHAR): Files.File;
   VAR dir, name: Files.Name; loc: Files.Locator; f: Files.File;
   (*CODE ADDED BEGIN*)
-  fullname: ARRAY 200 OF CHAR;
+  mod: ARRAY 200 OF CHAR;
   (*CODE ADDED END*)
 BEGIN
   Kernel.SplitName(modname, dir, name);
   Kernel.MakeFileName(name, Kernel.objType);
 
   (*CODE ADDED BEGIN*)
-  fullname := modname$;
-  Kernel.MakeFileName(fullname, Kernel.objType);
+  mod := modname$;
 
-  (* 3. В рабочем каталоге: Linux/Code/EngineMain.ocf *)
-  loc := Files.dir.This(Config.curOs);
-  loc := loc.This(OFdir);
-  f := Files.dir.Old(loc, fullname$, TRUE);
+  (* 5. _Build/TableBox.ocf *)
+  loc := Files.dir.This('_Build');
+  f := Files.dir.Old(loc, mod + '.ocf', TRUE);
 
-  (* 4. В рабочем каталоге: Code/EngineMain.ocf *)
+  (* 6. _Build/TableBox-Linux.ocf *)
   IF f = NIL THEN
-    loc := Files.dir.This(OFdir);
-    f := Files.dir.Old(loc, fullname$, TRUE)
+    loc := Files.dir.This('_Build');
+    f := Files.dir.Old(loc, mod + '-' + Config.curOs + '.ocf', TRUE)
   END;
 
-  (* 6. В рабочем каталоге: Engine/Code/Main.ocf *)
-  IF f = NIL THEN
-    loc := Files.dir.This(dir);
-    loc := loc.This(OFdir);
-    f := Files.dir.Old(loc, name, TRUE)
-  END;
-
-  (* 7. В системном каталоге: Code/EngineMain.ocf *)
+  (* 7. SYSDIR/_Build/TableBox.ocf *)
   IF f = NIL THEN
     loc := Files.dir.This(Config.sysDir);
-    loc := loc.This(OFdir);
-    f := Files.dir.Old(loc, fullname$, TRUE)
+    loc := loc.This('_Build');
+    f := Files.dir.Old(loc, mod + '.ocf', TRUE)
   END;
 
-  (* 8. В системном каталоге: Linux/Code/EngineMain.ocf *)
+  (* 8. SYSDIR/_Build/TableBox-Linux.ocf *)
   IF f = NIL THEN
     loc := Files.dir.This(Config.sysDir);
-    loc := loc.This(Config.curOs);
-    loc := loc.This(OFdir);
-    f := Files.dir.Old(loc, name, TRUE)
+    loc := loc.This('_Build');
+    f := Files.dir.Old(loc, mod + '-' + Config.curOs + '.ocf', TRUE)
   END;
 
-  (* 9. В системном каталоге: Engine/Code/Main.ocf *)
+  (* Fallback BEGIN *)
   IF f = NIL THEN
-    loc := Files.dir.This(Config.sysDir);
-    loc := loc.This(dir);
-    loc := loc.This(OFdir);
-    f := Files.dir.Old(loc, name, TRUE)
+		Kernel.SplitName(modname, dir, name);
+		Kernel.MakeFileName(name, Kernel.objType);
+		loc := Files.dir.This(dir); loc := loc.This(OFdir);
+		f := Files.dir.Old(loc, name, TRUE);
+		IF (f = NIL) & (dir = "") THEN
+			loc := Files.dir.This(SYSdir); loc := loc.This(OFdir);
+			f := Files.dir.Old(loc, name, TRUE)
+    END
   END;
+  (* Fallback END *)
+
   (*CODE ADDED END*)
 
   RETURN f
@@ -1470,18 +1466,18 @@ BEGIN
           PrepResources;
           IF ~error THEN WriteHeader(name) END;
           IF ~error THEN WriteOut(name) END;
-          IF ~error THEN	
+          (*IF ~error THEN	
             W_WriteString(name); W_WriteString(" written  ");
             W_WriteInt(Out.Length()); W_WriteString("  "); W_WriteInt(CodeSize)
-          END
-        ELSE W_WriteString(" := missing"); error := TRUE
+          END*)
+        ELSE W_WriteString(" := missing"); W_WriteLn; error := TRUE
         END
-      ELSE W_WriteString(" := missing"); error := TRUE
+      ELSE W_WriteString(" := missing"); W_WriteLn; error := TRUE
       END
-    ELSE W_WriteString("name missing"); error := TRUE
+    ELSE W_WriteString("name missing"); W_WriteLn; error := TRUE
     END;
-    W_WriteLn; StdLog.text.Append(StdLog.buf)
-  ELSE W_WriteString("name missing"); error := TRUE
+    StdLog.text.Append(StdLog.buf)
+  ELSE W_WriteString("name missing"); W_WriteLn; error := TRUE
   END;
   IF error THEN Dialog.ShowStatus("failed") ELSE Dialog.ShowStatus("ok") END;
   W.ConnectTo(NIL); S.ConnectTo(NIL);

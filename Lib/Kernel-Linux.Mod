@@ -1,5 +1,4 @@
-MODULE Kernel;
-
+MODULE Kernel; (* Linux *)
 IMPORT S := SYSTEM, Libc := LinLibc, LibW := LinLibW, Dl := LinDl, Rt := LinRt;
 
 CONST

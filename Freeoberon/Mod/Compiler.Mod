@@ -56,6 +56,25 @@ BEGIN
   END
 END GetErrors;
 
+PROCEDURE IsOsFile(IN s: ARRAY OF CHAR): BOOLEAN;
+VAR i, j: INTEGER;
+BEGIN j := -1; (* Find the last '.' in s or end of 's' *)
+  i := 0; WHILE s[i] # 0X DO
+    IF s[i] = '.' THEN j := i END;
+    INC(i)
+  END;
+  IF j = -1 THEN j := i END;
+
+  DEC(j); (* i := Length of curOs *)
+  i := 0; WHILE Config.curOs[i] # 0X DO INC(i) END;
+  IF (i # 0) & (j > i) THEN
+    DEC(i);
+    (* i and j are on the last letter of OS name *)
+    WHILE (i # -1) & (s[j] = Config.curOs[i]) DO DEC(i); DEC(j) END
+  END;
+  RETURN i = -1
+END IsOsFile;
+
 (*Компилирует модуль в указанном файле.
   В случае успеха возвращает TRUE. Иначе записывает
   список ошибок в errors. *)
@@ -66,19 +85,11 @@ VAR loc: Files.Locator;
   v: Views.View;
   src: TextModels.Model;
   error: BOOLEAN;
-  i: INTEGER;
 BEGIN
   error := TRUE;
   loc := Files.dir.This('');
   IF loc.res = 0 THEN
-    
-    i := 0;
-    WHILE (Config.curOs[i] # 0X) & (Config.curOs[i] = fname[i]) DO INC(i) END;
-    Config.SetOsFile((Config.curOs[i] = 0X) & (fname[i] = '/'));
-
-    Out.String(' OPEN VIEW "' + fname + '".      OSFILE = ');
-    IF Config.isOsFile THEN Out.String('TRUE') ELSE Out.String('FALSE') END; Out.Ln;
-
+    Config.SetOsFile(IsOsFile(fname));
     v := Views.OldView(loc, fname$);
     IF v # NIL THEN
       WITH v: TextViews.View DO

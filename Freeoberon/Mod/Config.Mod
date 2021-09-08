@@ -3,7 +3,7 @@ MODULE FreeoberonConfig;
 VAR
   sysDir-: ARRAY 256 OF CHAR;
   debug-: BOOLEAN;
-  isOsFile-: BOOLEAN; (* If currently compile filed is in Win or Linux folder etc.*)
+  isOsFile-: BOOLEAN; (* If currently compiled module is OS-specific *)
   curOs-: ARRAY 30 OF CHAR;
 
 PROCEDURE SetSysDir*(IN dir: ARRAY OF CHAR);
@@ -23,5 +23,5 @@ END SetOsFile;
 
 BEGIN isOsFile := FALSE;
   curOs[0] := 0X; sysDir[0] := 0X;
-  debug := TRUE
+  debug := FALSE
 END FreeoberonConfig.

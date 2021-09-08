@@ -345,16 +345,10 @@ VAR list, p: Item;
 BEGIN error := FALSE;
   r := OpenModule(mod$, exactFname, fname, isSystem, hasSource, hasCode);
   IF (r # NIL) & ~hasSource & ~hasCode THEN (* Sym file returned, assume binding *)
-    Out.String(' - assume binding -'); Out.Ln;
     AddModule(modules, mod$, fname$, isSystem, hasSource, TRUE)
   ELSIF r # NIL THEN
-    Out.String(' - assume module -'); Out.Ln;
     list := ReadImportList(r, hasSource, error, realModName, isBinding);
     IF ~error THEN
-    
-      Out.String(' - import list read - ');
-      p := list; WHILE p # NIL DO Out.String(p.name); Out.String(', '); p := p.next END; Out.Ln;
-
       p := list;
       WHILE ~error & (p # NIL) DO
         IF (p.name # 'SYSTEM') & (p.name # 'COM') &
@@ -428,8 +422,6 @@ BEGIN
       j := 0;
       WHILE p.name[j] # 0X DO s[i] := p.name[j]; INC(i); INC(j) END;
       s[i] := ' '; INC(i); last := p
-    ELSE
-      Out.String('BINDING '); Out.String(p.name); Out.Ln
     END;
     p := p.next
   END;
