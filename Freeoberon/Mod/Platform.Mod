@@ -2,7 +2,7 @@ MODULE FreeoberonPlatform;
 
 IMPORT HostEnv;
 
-CONST os* = 'Win';
+CONST os* = 'Linux';
 
 PROCEDURE GetAppDir*(OUT dir: ARRAY OF CHAR);
 VAR s: ARRAY 1000 OF CHAR;
