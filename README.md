@@ -1,16 +1,16 @@
-# Cross-platform Oberon Compiler 2021
+# Cross-platform Oberon Compiler
 
-![Oberon Compiler screenshot](screenshot.png)
+![Oberon Compiler screenshot](foc_screenshot.png)
 
-## Console Compiler for Oberon (Component Pascal)
+## Console Compiler for Component Pascal for Windows and Linux
 
 * [YouTube-channel about the project](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
 * [Free Oberon website](https://free.oberon.org/en)
 
 *See Engish version below*
 
-# Кроссплатформенный компилятор Оберона 2021
-## Консольный компилятор Оберона (Компонентного Паскаля)
+# Кроссплатформенный компилятор Оберона
+## Консольный компилятор Компонентного Паскаля для Виндоуса и Линукса
 
 * [Ютуб-канал о данном проекте](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
 * [Сайт Free Oberon](https://free.oberon.org)
