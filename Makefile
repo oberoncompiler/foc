@@ -13,7 +13,7 @@ Freeoberon/Code/Platform.ocf: Freeoberon/Mod/Platform.Mod Code/Args.ocf
 
 Freeoberon/Code/Config.ocf: Freeoberon/Mod/Config.Mod
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Config.Mod')" | ./runc
-	cp _Build/FreeoberonConfig.ocf BlackBox/Freeoberon/Code/Config.ocf
+	#cp _Build/FreeoberonConfig.ocf BlackBox/Freeoberon/Code/Config.ocf
 	#cp _Build/FreeoberonConfig.osf BlackBox/Freeoberon/Sym/Config.osf
 
 Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
@@ -21,7 +21,8 @@ Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
 
 Dev2/Code/LnkBase.ocf: Dev2/Mod/LnkBase.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkBase.Mod')" | ./runc
-	cp _Build/Dev2LnkBase.ocf BlackBox/Dev2/Code/LnkBase.ocf
+	#cp _Build/Dev2LnkBase.ocf BlackBox/Dev2/Code/LnkBase.ocf
+	#cp _Build/Dev2LnkBase.osf BlackBox/Dev2/Sym/LnkBase.osf
 
 Dev2/Code/LnkChmod.ocf: Dev2/Mod/LnkChmod.Mod Dev2/Code/LnkBase.ocf
 	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkChmod.Mod')" | ./runc
