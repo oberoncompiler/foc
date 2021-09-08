@@ -2,9 +2,7 @@
 
 ![Oberon Compiler screenshot](screenshot.png)
 
-## Console Compiler for Component Pascal (Oberon)
-
-(now supports Linux & Windows on x86; uses BlackBox)
+## Console Compiler for Oberon (Component Pascal)
 
 * [YouTube-channel about the project](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
 * [Free Oberon website](https://free.oberon.org/en)
@@ -12,9 +10,7 @@
 *See Engish version below*
 
 # Кроссплатформенный компилятор Оберона 2021
-## Консольный компилятор Компонентного Паскаля (Оберона)
-
-(сейчас поддерживает Линукс и Виндоус на x86; использует BlackBox)
+## Консольный компилятор Оберона (Компонентного Паскаля)
 
 * [Ютуб-канал о данном проекте](https://www.youtube.com/channel/UCfaaot6JjktvqQCUOkXxEsA)
 * [Сайт Free Oberon](https://free.oberon.org)
@@ -27,40 +23,54 @@ make
 ```
 Для Линукса см. примечания ниже.
 
-2. Для компиляции и запуска тестовой программы (`Main.Mod`) наберите:
+2. Для компиляции и запуска тестовой программы наберите:
 
 На Линуксе:
 ```
-./foc Main
-./Main
+cd tests/tinytest
+../../foc Prog1
+./Prog1
 ```
 
 На Виндоусе:
 ```
-foc Main
-Main
+cd tests\tinytest
+..\..\foc Prog1
+Prog1
 ```
 
-Ваша программа может находиться и в другом каталоге.
-Файлы обязательно должны иметь расширение `.Mod`, а названия
-файлов должны совпадать с названиями модулей.
+Запускать компилятор foc можно из любого каталога — он сам определяет своё
+местоположение. Файлы обязательно должны иметь расширение `.Mod`, а имена
+файлов должны совпадать с именами модулей.
+
+В имени файла можно указывать платформу (ОС), например: `Term-Linux.Mod`,
+`Term-Win.Mod`. Компилятор будет брать тот или иной файл в зависимости от
+того, на какой платформе он запущен.
+
+Если имя модуля состоит из двух и более слов (например, `GuiButtons`), его
+позволяется поместить в каталог `Gui`, а сам файл назвать `Buttons.Mod`.
+
+Файлы, получающиеся в результате компиляции модулей, помещаются в каталог
+`_Build`.
+
+Рядом с исполняемым файлом компилятора есть каталог `Lib`. Откомпилированные
+модули, находящиеся в `Lib/_Build`, при необходимости автоматически
+подключаются к вашей программе.
 
 ### Примечания для Линукса
 
 Чтобы собрать проект, у вас должна быть установлена программа `make`,
 считывающая файл `Makefile` и запускающая команды, указанные в нём.
+Эти команды при желании можно запустить вручную.
 
 Для установки Make на Дебиане, Убунту и т. п. наберите:
 ```
 sudo apt-get install make
 ```
 
-Можно обойтись и без Make, выполнив команды из файла `Makefile`
-вручную в правильном порядке (прочтите, как работает Make).
-
 ### Примечания для Виндоуса
 
-На Виндоусе вместо Make используется сценарий `make.bat`.
+На Виндоусе вместо Make используется файл-сценарий `make.bat`.
 Перед сборкой компилятора сценарий переименовывает файлы
 и каталоги с префиксом `__WIN_`, убирая этот префикс. Например:
 
@@ -80,16 +90,16 @@ sudo apt-get install make
 ```
 ./foc <название_главного_модуля>
 ```
+
 На Виндоусе:
 ```
 foc <название_главного_модуля>
 ```
 
-Компилятор сам добавляет расширение `.Mod` к названию модуля, открывает
-соответствующиий файл, а затем рекурсивно обходит все файлы проекта,
-включая уже откомпилированные файлы, находящиеся в так называемом
-системном каталоге -- в каталоге `BlackBox` рядом
-с файлом `foc` (или `foc.exe`).
+Компилятор сам добавляет расширение `.Mod` (но его всё же разрешается указать)
+к названию модуля, открывает соответствующиий файл, после чего рекурсивно
+обходит все файлы проекта, включая уже откомпилированные sym- или ocf-файлы,
+находящиеся в «системном» каталоге `Lib/_Build`.
 
 ## Как пересобрать ББКП для обновления подкаталога BlackBox
 
@@ -109,8 +119,7 @@ gh repo clone bbcb/bbcp
 ```
 
 2. Внутри ББКП зайдите в подкаталог `BlackBox` и с помощью следующей
-команды перейдите в ветку `dev18` (возможно, в будущих версиях ББКП
-этот шаг будет выглядеть иначе):
+команды перейдите в ветку `dev18`:
 ```
 git checkout dev18
 ```
@@ -139,36 +148,57 @@ git checkout dev18
 используется файл `Host/Mod/Files.Mod` (не в каталоге
 `BlackBox`). Эти пары файлов могут легко разойтись при выходе
 новых версий ББКП, поэтому их придётся заменить новыми версиями
-и соответствующиим образом отредактировать. Эти изменения,
-однако, минимальны и сводятся к удалению кусков кода и
-изменению некоторых строк.
+и соответствующиим образом отредактировать.
 
-__________________________________
+______
 
 
-# ENGLISH VERSION
+*ENGLISH VERSION*
+
+# Free Oberon Compiler
 
 ## Quick Start
 
-1.On Linux or Windows command line go to the `foc` directory and type:
+1. On Linux or Windows command line go to the `foc` directory and type:
 ```
 make
 ```
 For Linux, see the notes below.
 
-2. To compile and run the test program (`Main.Mod`), type:
+2. To compile and run the test program, type:
 
 On Linux:
 ```
-./foc Main
-./Main
+cd tests/tinytest
+../../foc Prog1
+./Prog1
 ```
 
 On Windows:
 ```
-foc Main
-Main
+cd tests\tinytest
+..\..\foc Prog1
+Prog1
 ```
+
+You can run the foc compiler from any directory–it determines its location by
+itself. The files must have the extension `.Mod`, and the file names must match
+the names of the modules.
+
+It is possible to specify the platform (OS) in the file name, for example:
+`Term-Linux.Mod`,` Term-Win.Mod`. The compiler will take the corresponding file
+depending on what platform it is running on.
+
+If a module name consists of two or more words (for example, `GuiButtons`), it
+is possible to place it in the `Gui` directory, and rename the file as
+`Buttons.Mod`.
+
+The files resulting from the compilation of modules are placed in the `_Build`
+directory.
+
+There is a `Lib` directory next to the compiler executable file. The compiled
+modules in `Lib/_Build` are automatically linked to your program when it is
+required.
 
 ### Notes for Linux
 
@@ -234,8 +264,7 @@ gh repo clone bbcb/bbcp
 ```
 
 2. Inside BBCP, go to the `BlackBox` subdirectory and type the following
-command to switch to the` dev18` branch (this step may look different in
-future versions of BBCP):
+command to switch to the` dev18` branch:
 ```
 git checkout dev18
 ```
@@ -263,5 +292,3 @@ instead of `BlackBox/Host/Mod/Files.odc`, the build uses the file
 `Host/Mod/Files.Mod` (not in the `BlackBox` directory). These pairs of
 files can easily diverge when new versions of the BBCP are released, so
 they will have to be replaced with new versions and edited accordingly.
-These changes, however, are minimal and boil down to removing chunks of
-code and changing some lines of the code.

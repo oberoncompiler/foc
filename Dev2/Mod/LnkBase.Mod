@@ -461,28 +461,43 @@ VAR f: Files.File; loc: Files.Locator;
 BEGIN
   Kernel.SplitName(modname, dir, fname);
   Kernel.MakeFileName(fname, Kernel.objType);
-  loc := Files.dir.This(dir);
-  loc := loc.This(OFdir);
-  f := Files.dir.Old(loc, fname, TRUE);
-  IF (f = NIL) & (dir = "") THEN
-    loc := Files.dir.This(SYSdir);
+
+  (*CODE ADDED BEGIN*)
+
+  (* 5. _Build/TableBox.ocf *)
+  loc := Files.dir.This('_Build');
+  f := Files.dir.Old(loc, modname + '.ocf', TRUE);
+
+  (* 6. _Build/TableBox-Linux.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This('_Build');
+    f := Files.dir.Old(loc, modname + '-' + Config.curOs + '.ocf', TRUE)
+  END;
+
+  (* 7. SYSDIR/_Build/TableBox.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(Config.sysDir);
+    loc := loc.This('_Build');
+    f := Files.dir.Old(loc, modname + '.ocf', TRUE)
+  END;
+
+  (* 8. SYSDIR/_Build/TableBox-Linux.ocf *)
+  IF f = NIL THEN
+    loc := Files.dir.This(Config.sysDir);
+    loc := loc.This('_Build');
+    f := Files.dir.Old(loc, modname + '-' + Config.curOs + '.ocf', TRUE)
+  END;
+
+  (* Fallback BEGIN *)
+
+  IF f = NIL THEN
+    loc := Files.dir.This(dir);
     loc := loc.This(OFdir);
     f := Files.dir.Old(loc, fname, TRUE)
   END;
 
-  (*CODE ADDED BEGIN*)
-  IF f = NIL THEN
-    loc := Files.dir.This(Config.sysDir);
-    loc := loc.This(dir);
-    loc := loc.This(OFdir);
-    f := Files.dir.Old(loc, fname, TRUE);
-    IF (f = NIL) & (dir = "") THEN
-      loc := Files.dir.This(Config.sysDir);
-      loc := loc.This(SYSdir);
-      loc := loc.This(OFdir);
-      f := Files.dir.Old(loc, fname, TRUE)
-    END
-  END;
+  (* Fallback END *)
+
   (*CODE ADDED END*)
 
   RETURN f

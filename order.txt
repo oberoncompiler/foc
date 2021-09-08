@@ -1,16 +1,76 @@
-    1. В рабочем каталоге: EngineMain.Mod
-    2. В рабочем каталоге: Code/EngineMain.ocf   ←
-    3. В рабочем каталоге: Engine/Main.Mod
-    4. В рабочем каталоге: Engine/Mod/Main.Mod
-    5. В рабочем каталоге: Engine/Code/Main.ocf  ←
-    6. В системном каталоге: Code/EngineMain.ocf
-    7. В системном каталоге: Engine/Code/Main.ocf
+TWO WORDS    mod=TableBox, w1=Table, w2=Box
+  1. TableBox.Mod                      mod
+  2. TableBox-Linux.Mod                mod
+  3. Table/Box.Mod                     w1/w2
+  4. Table/Box-Linux.Mod               w1/w2-OS
+  5. _Build/TableBox.sym               mod
+  6. _Build/TableBox-Linux.sym         mod-OS
+  7. SYSDIR/_Build/TableBox.sym        mod
+  8. SYSDIR/_Build/TableBox-Linux.sym  mod-OS
 
-    В случае нахождения файла в пунктах 2 и 5 необходимо
-    проверить и наличие файла с символьным кодом. Соответственно:
-      2а. В рабочем каталоге: Sym/EngineMain.osf
-      5а. В рабочем каталоге: Engine/Sym/Main.osf
+ONE WORD     mod=Sdl2, w1=Sdl2, w2=Sdl2
+  1. Sdl2.Mod                          --||--
+  2. Sdl2-Linux.Mod
+  3. Sdl2/Sdl2.Mod
+  4. Sdl2/Sdl2-Linux.Mod
+  5. _Build/Sdl2.sym
+  6. _Build/Sdl2-Linux.sym
+  7. SYSDIR/_Build/Sdl2.sym
+  8. SYSDIR/_Build/Sdl2-Linux.sym
 
-    Аналогично, при нахождении файла в пунктах 6 и 7:
-      6а. В системном каталоге: Sym/EngineMain.osf
-      7а. В системном каталоге: Engine/Sym/Main.osf
+
+MyProg
+  Build
+    Term-Linux.ocf
+    Term-Linux.sym
+    Term-Win.ocf
+    Term-Win.sym
+    TableBox.ocf
+    TableBox.sym
+    Main.ocf
+    Main.sym
+  Term-Linux.Mod  Term
+  Term-Win.Mod    Term
+  Table
+    Box.Mod       TableBox
+  Main.Mod        Main
+
+Lib
+  Build
+    Files-Linux.ocf
+    Files-Linux.sym
+    Out-Linux.ocf
+    Out-Linux.sym
+    Files-Win.ocf
+    Files-Win.sym
+    Out-Win.ocf
+    Out-Win.sym
+    Graph.ocf
+    Graph.ocf
+    Gui.ocf
+    Gui.sym
+    Sdl2.ocf
+    Sdl2.sym
+    Sdl2Image.ocf
+    Sdl2Image.sym
+    Sdl2Mixer.ocf
+    Sdl2Mixer.sym
+    Sdl2Net.ocf
+    Sdl2Net.sym
+    Strings.ocf
+    Strings.sym
+  Out-Linux.Mod    Out
+  Files-Linux.Mod  Files
+  Out-Win.Mod      Out
+  Files-Win.Mod    Files
+  Graph.Mod        Graph
+  Strings.Mod      Strings
+  Gui
+    Gui.Mod        Gui
+    Buttons.Mod    GuiButtons
+    Labels.Mod     GuiLabels
+  Sdl2
+    Sdl2.Mod       Sdl2
+    Image.Mod      Sdl2Image
+    Mixer.Mod      Sdl2Mixer
+    Net.Mod        Sdl2Net

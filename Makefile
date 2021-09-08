@@ -1,6 +1,6 @@
 PROG=foc
 
-all: $(PROG)
+all: $(PROG) lib
 
 Code/Args.ocf: System/Mod/Args.Mod
 	echo "ConsCompiler.Compile('System/Mod', 'Args.Mod')" | ./runc
@@ -12,17 +12,16 @@ Freeoberon/Code/Platform.ocf: Freeoberon/Mod/Platform.Mod Code/Args.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Platform.Mod')" | ./runc
 
 Freeoberon/Code/Config.ocf: Freeoberon/Mod/Config.Mod
-	rm -rf BlackBox/Freeoberon
-	mkdir -p BlackBox/Freeoberon/Code BlackBox/Freeoberon/Sym
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Config.Mod')" | ./runc
-	cp Freeoberon/Code/Config.ocf BlackBox/Freeoberon/Code
-	cp Freeoberon/Sym/Config.osf BlackBox/Freeoberon/Sym
+	cp _Build/FreeoberonConfig.ocf BlackBox/Freeoberon/Code/Config.ocf
+	#cp _Build/FreeoberonConfig.osf BlackBox/Freeoberon/Sym/Config.osf
 
 Dev/Code/CPM.ocf: Dev/Mod/CPM.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev/Mod', 'CPM.Mod')" | ./runc
 
 Dev2/Code/LnkBase.ocf: Dev2/Mod/LnkBase.Mod Freeoberon/Code/Config.ocf
 	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkBase.Mod')" | ./runc
+	cp _Build/Dev2LnkBase.ocf BlackBox/Dev2/Code/LnkBase.ocf
 
 Dev2/Code/LnkChmod.ocf: Dev2/Mod/LnkChmod.Mod Dev2/Code/LnkBase.ocf
 	echo "ConsCompiler.Compile('Dev2/Mod', 'LnkChmod.Mod')" | ./runc
@@ -54,9 +53,8 @@ $(PROG): Freeoberon/Code/Main.ocf Host/Code/Files.ocf Dev2/Code/LnkChmod.ocf
 .PHONY: clean run
 
 clean:
-	rm -rf Freeoberon/Code \
-		Freeoberon/Sym \
-		BlackBox/Freeoberon \
+	rm -rf \
+		_Build \
 		System/Code \
 		System/Sym \
 		Host/Code \
@@ -68,6 +66,11 @@ clean:
 		Code \
 		Sym \
 		$(PROG)
+
+lib:
+	cd Lib && \
+		../foc AllLibs && \
+		rm AllLibs _Build/AllLibs.*
 
 run: $(PROG)
 	@echo =======================================

@@ -1,5 +1,0 @@
-MODULE Main;
-IMPORT B;
-BEGIN
-  B.Do
-END Main.
