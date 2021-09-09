@@ -1,6 +1,6 @@
 # Cross-platform Oberon Compiler
 
-![Oberon Compiler screenshot](foc_screenshot.png)
+![Oberon Compiler screenshot](screenshot.png)
 
 ## Console Compiler for Component Pascal for Windows and Linux
 
