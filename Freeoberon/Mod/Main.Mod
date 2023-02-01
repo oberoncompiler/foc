@@ -27,6 +27,7 @@ TYPE
 VAR
   modules: Item;
   workDir: String;
+  result: INTEGER;
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
@@ -446,6 +447,7 @@ BEGIN
       IF CompileAll(modules, errors) THEN
         IF Config.debug THEN Out.String('===== НАЧИНАЮ КОМПОНОВКУ ====='); Out.Ln END;
         IF Link(modules) THEN
+          result := 0;
           IF Config.debug THEN Out.String('Исполнимый файл создан.'); Out.Ln END
         ELSE Out.String('Не удалось скомпоновать.'); Out.Ln
         END
@@ -459,6 +461,7 @@ END Do;
 PROCEDURE Init;
 VAR s: ARRAY 1000 OF CHAR;
 BEGIN
+  result := 1;
   Converters.Register('Documents.ImportDocument',
     'Documents.ExportDocument', '', 'odc', {});
   Converters.Register('HostTextConv.ImportUtf8',
@@ -474,5 +477,5 @@ END Init;
 BEGIN
   Init;
   Do;
-  Kernel.Quit(0)
+  Kernel.Quit(result)
 END FreeoberonMain.
