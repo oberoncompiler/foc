@@ -78,6 +78,27 @@ PROCEDURE String*(IN text: ARRAY OF CHAR);
 BEGIN Print(text, LEN(text$))
 END String;
 
+PROCEDURE Int*(x, n: LONGINT);
+CONST zero = ORD('0');
+VAR s: ARRAY 22 OF CHAR; i: INTEGER; negative: BOOLEAN;
+BEGIN
+  negative := x < 0;
+  IF x = MIN(LONGINT) THEN
+    s := '8085774586302733229'; i := 19
+  ELSE
+    IF x < 0 THEN x := - x END;
+    s[0] := SHORT(CHR(zero + (x MOD 10))); x := x DIV 10;
+    i := 1; WHILE x # 0 DO
+      s[i] := SHORT(CHR(zero + (x MOD 10)));
+      x := x DIV 10;
+      INC(i)
+    END
+  END;
+  IF negative THEN s[i] := '-'; INC(i) END;
+  WHILE n > i DO Char(' '); DEC(n) END;
+  WHILE i > 0 DO DEC(i); Char(s[i]) END
+END Int;
+
 PROCEDURE Ln*;
 BEGIN Print(0DX + 0AX, 2)
 END Ln;
