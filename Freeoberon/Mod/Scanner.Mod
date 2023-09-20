@@ -23,10 +23,18 @@ VAR
 
 PROCEDURE ReadCh;
 VAR b: BYTE;
+  n: INTEGER;
 BEGIN
   IF ~r.eof THEN
     r.ReadByte(b);
-    ch := CHR(b)
+    IF b >= 0 THEN
+      ch := CHR(b)
+    ELSE
+      n := b + 256;
+      r.ReadByte(b);
+      n := ASH(n MOD 32, 6) + b MOD 64;
+      ch := CHR(n)
+    END
   ELSE ch := 0X
   END
 END ReadCh;
@@ -72,7 +80,7 @@ BEGIN
         IF ch = '=' THEN sym := becomes; ReadCh
         ELSE sym := bad; ReadCh
         END
-      | 'a'..'z', 'A'..'Z':
+      | 'a'..'z', 'A'..'Z', 'а'..'я', 'А'..'Я', 'ё', 'Ё', '_':
         idlen := 0;
         REPEAT
           IF idlen < LEN(id) - 1 THEN
@@ -82,6 +90,8 @@ BEGIN
           ReadCh
         UNTIL ~(('a' <= ch) & (ch <= 'z') OR
                 ('A' <= ch) & (ch <= 'Z') OR
+                ('а' <= ch) & (ch <= 'я') OR (ch = 'ё') OR
+                ('А' <= ch) & (ch <= 'Я') OR (ch = 'Ё') OR
                 ('0' <= ch) & (ch <= '9') OR (ch = '_'));
         id[idlen] := 0X;
         (*Out.String('id="'); Out.String(id); Out.String('" ');*)
