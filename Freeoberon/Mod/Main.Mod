@@ -9,6 +9,7 @@ CONST
   modFile  = 0;
   symFile  = 1;
   codeFile = 2;
+  cpFile   = 3;
 
 TYPE
   String = ARRAY 255 OF CHAR;
@@ -28,6 +29,7 @@ VAR
   modules: Item;
   workDir: String;
   result: INTEGER;
+  extensions: ARRAY 2 OF ARRAY 4 OF CHAR;
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
@@ -62,16 +64,26 @@ BEGIN
 END InList;
 
 (*Удаляет расширение файла ext в строке mod, если оно там есть.*)
-PROCEDURE MaybeRemoveExtension(VAR mod: ARRAY OF CHAR;
-    IN ext: ARRAY OF CHAR);
-VAR i, j: INTEGER;
+PROCEDURE MaybeRemoveExtension(VAR mod: ARRAY OF CHAR; OUT extension: ARRAY OF CHAR);
+VAR i, ei,
+    mpos, epos: INTEGER;
+  extFound: BOOLEAN;
 BEGIN
-  i := 0; WHILE mod[i] # 0X DO INC(i) END;
-  j := 0; WHILE ext[j] # 0X DO INC(j) END;
-  IF i > j + 1 THEN
-    REPEAT DEC(i); DEC(j) UNTIL (j = -1) OR (mod[i] # ext[j]);
-    IF (j = -1) & (mod[i] = '.') THEN mod[i] := 0X END
-  END
+  extension[0] := 0X; i := 0; extFound := FALSE;
+  REPEAT
+    mpos := 0; WHILE mod[mpos] # 0X DO INC(mpos) END;
+    epos := 0; WHILE extensions[i][epos] # 0X DO INC(epos) END;
+
+    IF mpos > epos + 1 THEN
+      REPEAT DEC(mpos); DEC(epos) UNTIL (epos = -1) OR (mod[mpos] # extensions[i][epos]);
+      extFound := (epos = -1) & (mod[mpos] = '.');
+      IF extFound THEN
+        ei := 0; WHILE extensions[i][ei] # 0X DO extension[ei] := extensions[i][ei]; INC(ei); END; extension[ei] := 0X;
+        mod[mpos] := 0X;
+      END;
+    END;
+    INC(i);
+  UNTIL extFound OR (i = LEN(extensions));
   (*              i
   mod = EngineMain.Mod
   ext =            Mod
@@ -119,11 +131,12 @@ VAR F: Files.File;
   s: ARRAY 1024 OF CHAR;
 BEGIN r2 := NIL;
   IF useSysDir THEN s := Config.sysDir$ ELSE s := '' END;
-  IF ftype # modFile THEN s := s + '_Build/' END;
+  IF (ftype # modFile) & (ftype # cpFile) THEN s := s + '_Build/' END;
   IF useFolder THEN s := s + w1 + '/' + w2 ELSE s := s + mod END;
   IF useOs THEN s := s + '-' + Config.curOs END;
 
   IF ftype = modFile THEN s := s + '.Mod'
+  ELSIF ftype = cpFile THEN s := s + '.cp'
   ELSIF ftype = symFile THEN s := s + '.sym'
   ELSE s := s + '.ocf'
   END;
@@ -171,14 +184,28 @@ END SplitModName;
   Если не удалось найти файл, возвращает NIL.
   В случае вызова `foc Games/Game1/Tetris`, в mod идёт только 'Tetris'.
   Примеры mod: 'Prog', 'Prog.Mod', 'code.txt'. *)
-PROCEDURE OpenModule(mod: ARRAY OF CHAR; exactFname: BOOLEAN;
-    OUT fname: ARRAY OF CHAR;
-    OUT system, hasSource, hasCode: BOOLEAN): Files.Reader;
-VAR r: Files.Reader;
+PROCEDURE OpenModule(
+  mod: ARRAY OF CHAR;
+  exactFname: BOOLEAN;
+  OUT fname: ARRAY OF CHAR;
+  OUT system, hasSource, hasCode: BOOLEAN
+  ): Files.Reader;
+VAR
+  r: Files.Reader;
   w1, w2: String;
-BEGIN r := NIL;
+  extension: ARRAY 4 OF CHAR;
+  ftype: INTEGER;
+BEGIN
+  r := NIL;
   IF exactFname THEN (*!TODO*)
-  ELSE MaybeRemoveExtension(mod, 'Mod')
+  ELSE MaybeRemoveExtension(mod, extension)
+  END;
+
+  ftype := modFile;
+  IF extension[0] # 0X THEN
+    IF extension = 'Mod' THEN ftype := modFile;
+    ELSIF extension = 'cp' THEN ftype := cpFile;
+    END;
   END;
 
   SplitModName(mod, w1, w2);
@@ -189,16 +216,16 @@ BEGIN r := NIL;
 
   (*                   |sysdir|folder|use OS| *)
   (* 1. TableBox.Mod   |      |      |      | *)
-  IF    OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, modFile, fname, r) THEN
+  IF    OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 2. TableBox-Linux.Mod *)
-  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , modFile, fname, r) THEN
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 3. Table/Box.Mod или Oneword/Oneword.Mod *)
-  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , FALSE, modFile, fname, r) THEN
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , FALSE, ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 4. Table/Box-Linux.Mod или Oneword/Oneword-Linux.Mod *)
-  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , modFile, fname, r) THEN
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 5. _Build/TableBox.sym *)
   ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, symFile, fname, r) THEN
@@ -310,7 +337,7 @@ BEGIN
       name[i] := CHR(x);
       INC(i);
       r.ReadByte(x)
-    END;  
+    END;
     name[i] := 0X;
     IF name[0] # '$' THEN 
       AddModule(list, name, '', FALSE, FALSE, FALSE)
@@ -461,6 +488,9 @@ END Do;
 PROCEDURE Init;
 VAR s: ARRAY 1000 OF CHAR;
 BEGIN
+  extensions[0] := 'Mod';
+  extensions[1] := 'cp';
+
   result := 1;
   Converters.Register('Documents.ImportDocument',
     'Documents.ExportDocument', '', 'odc', {});
