@@ -67,7 +67,7 @@ END InList;
 PROCEDURE MaybeRemoveExtension(VAR mod: ARRAY OF CHAR; OUT extension: ARRAY OF CHAR);
 VAR i, ei,
     mpos, epos: INTEGER;
-  extFound: BOOLEAN;
+    extFound: BOOLEAN;
 BEGIN
   extension[0] := 0X; i := 0; extFound := FALSE;
   REPEAT
