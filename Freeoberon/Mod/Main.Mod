@@ -30,6 +30,7 @@ VAR
   workDir: String;
   result: INTEGER;
   extensions: ARRAY 4, 4 OF CHAR;
+  textFileTypes: SET;
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
@@ -132,7 +133,7 @@ VAR F: Files.File;
 BEGIN
   r2 := NIL;
   IF useSysDir THEN s := Config.sysDir$ ELSE s := '' END;
-  IF (ftype # modFile) & (ftype # cpFile) THEN s := s + '_Build/' END;
+  IF ~(ftype IN textFileTypes) THEN s := s + '_Build/' END;
   IF useFolder THEN s := s + w1 + '/' + w2 ELSE s := s + mod END;
   IF useOs THEN s := s + '-' + Config.curOs END;
 
@@ -488,6 +489,8 @@ BEGIN
   extensions[symFile] := 'sym';
   extensions[codeFile] := 'ocf';
   extensions[cpFile] := 'cp';
+
+  textFileTypes := {modFile, cpFile};
 
   result := 1;
   Converters.Register('Documents.ImportDocument',
