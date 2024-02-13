@@ -29,7 +29,7 @@ VAR
   modules: Item;
   workDir: String;
   result: INTEGER;
-  extensions: ARRAY 2 OF ARRAY 4 OF CHAR;
+  extensions: ARRAY 4, 4 OF CHAR;
 
 (*Добавляет название модуля mod в список list.*)
 PROCEDURE AddModule(VAR list: Item; mod, fname: ARRAY OF CHAR;
@@ -69,7 +69,7 @@ VAR i, ei,
     mpos, epos: INTEGER;
     extFound: BOOLEAN;
 BEGIN
-  extension[0] := 0X; i := 0; extFound := FALSE;
+  i := 0; extFound := FALSE;
   REPEAT
     mpos := 0; WHILE mod[mpos] # 0X DO INC(mpos) END;
     epos := 0; WHILE extensions[i][epos] # 0X DO INC(epos) END;
@@ -129,17 +129,14 @@ PROCEDURE OpenFile(IN mod, w1, w2: ARRAY OF CHAR;
 VAR F: Files.File;
   r2: Files.Reader;
   s: ARRAY 1024 OF CHAR;
-BEGIN r2 := NIL;
+BEGIN
+  r2 := NIL;
   IF useSysDir THEN s := Config.sysDir$ ELSE s := '' END;
   IF (ftype # modFile) & (ftype # cpFile) THEN s := s + '_Build/' END;
   IF useFolder THEN s := s + w1 + '/' + w2 ELSE s := s + mod END;
   IF useOs THEN s := s + '-' + Config.curOs END;
 
-  IF ftype = modFile THEN s := s + '.Mod'
-  ELSIF ftype = cpFile THEN s := s + '.cp'
-  ELSIF ftype = symFile THEN s := s + '.sym'
-  ELSE s := s + '.ocf'
-  END;
+  s := s + '.' + extensions[ftype];
 
   IF Config.debug THEN Out.String('ПРОБУЮ "' + s + '"') END;
   F := FileOld(s$);
@@ -194,18 +191,17 @@ VAR
   r: Files.Reader;
   w1, w2: String;
   extension: ARRAY 4 OF CHAR;
-  ftype: INTEGER;
+  ftype, i: INTEGER;
 BEGIN
-  r := NIL;
+  r := NIL; extension := '';
   IF exactFname THEN (*!TODO*)
   ELSE MaybeRemoveExtension(mod, extension)
   END;
 
-  ftype := modFile;
+  ftype := modFile; i := 0;
   IF extension[0] # 0X THEN
-    IF extension = 'Mod' THEN ftype := modFile;
-    ELSIF extension = 'cp' THEN ftype := cpFile;
-    END;
+    WHILE (i < LEN(extensions)) & (extensions[i] # extension) DO INC(i) END;
+    IF i < LEN(extensions) THEN ftype := i; END;
   END;
 
   SplitModName(mod, w1, w2);
@@ -488,8 +484,10 @@ END Do;
 PROCEDURE Init;
 VAR s: ARRAY 1000 OF CHAR;
 BEGIN
-  extensions[0] := 'Mod';
-  extensions[1] := 'cp';
+  extensions[modFile] := 'Mod';
+  extensions[symFile] := 'sym';
+  extensions[codeFile] := 'ocf';
+  extensions[cpFile] := 'cp';
 
   result := 1;
   Converters.Register('Documents.ImportDocument',
