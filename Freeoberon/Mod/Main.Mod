@@ -154,22 +154,28 @@ END OpenFile;
     просто дублирует его в w1 и w2.
 Пример: 'GameScripts' -> ['Game', 'Scripts'].
         'Allegro5' -> ['Allegro5', 'Allegro5']. *)
-PROCEDURE SplitModName(IN mod: ARRAY OF CHAR;
-    OUT w1, w2: ARRAY OF CHAR);
+PROCEDURE SplitModName(IN mod: ARRAY OF CHAR; OUT w1, w2: ARRAY OF CHAR);
 VAR i, j, k: INTEGER;
-BEGIN i := 1;
-  (* i := position of the first capital letter that
-     follows a non-capital letter. *)
-  WHILE (mod[i] # 0X) &
-    ~(('A' <= mod[i]) & (mod[i] <= 'Z') &
-      ~(('A' <= mod[i - 1]) & (mod[i - 1] <= 'Z')))
+BEGIN
+  i := 1;
+  (* i := position of the first capital letter that follows a non-capital letter. *)
+  WHILE
+    (mod[i] # 0X)
+    &
+    ~(
+        ( ('A' <= mod[i]  ) & (mod[i]   <= 'Z') OR ('А' <= mod[i]  ) & (mod[i]   <= 'Я') OR (mod[i]   = 'Ё') )
+        &
+        ( ('a' <= mod[i-1]) & (mod[i-1] <= 'z') OR ('а' <= mod[i-1]) & (mod[i-1] <= 'я') OR (mod[i-1] = 'ё') )
+     )
   DO INC(i) END;
+
+  IF mod[i] = 0X THEN k := 0 ELSE k := i; END;
 
   (* Copy first part (or the whole name) into w1 *)
   j := 0; WHILE j < i DO w1[j] := mod[j]; INC(j) END;
   w1[j] := 0X;
+
   (* Copy second part (or the whole name again) into w2 *)
-  IF mod[i] = 0X THEN k := 0 ELSE k := i; END;
   j := 0; WHILE mod[k] # 0X DO w2[j] := mod[k]; INC(j); INC(k) END;
   w2[j] := 0X
 END SplitModName;
