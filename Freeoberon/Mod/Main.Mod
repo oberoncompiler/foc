@@ -2,7 +2,7 @@ MODULE FreeoberonMain;
 IMPORT Compiler := FreeoberonCompiler, Scan := FreeoberonScanner,
   Linker := FreeoberonLinker, Kernel, Errors := FreeoberonErrors,
   Config := FreeoberonConfig, Platform := FreeoberonPlatform,
-  Converters, Out := Log, Files, HostFiles, Args;
+  Converters, Out := Log, Files, HostFiles, Args, CharUtils;
 
 CONST
   (* Константы для OpenFile *)
@@ -159,15 +159,7 @@ VAR i, j, k: INTEGER;
 BEGIN
   i := 1;
   (* i := position of the first capital letter that follows a non-capital letter. *)
-  WHILE
-    (mod[i] # 0X)
-    &
-    ~(
-        ( ('A' <= mod[i]  ) & (mod[i]   <= 'Z') OR ('А' <= mod[i]  ) & (mod[i]   <= 'Я') OR (mod[i]   = 'Ё') )
-        &
-        ( ('a' <= mod[i-1]) & (mod[i-1] <= 'z') OR ('а' <= mod[i-1]) & (mod[i-1] <= 'я') OR (mod[i-1] = 'ё') )
-     )
-  DO INC(i) END;
+  WHILE (mod[i] # 0X) & ~(CharUtils.IsUpper(mod[i]) & CharUtils.IsLower(mod[i - 1])) DO INC(i) END;
 
   IF mod[i] = 0X THEN k := 0 ELSE k := i; END;
 
@@ -230,25 +222,37 @@ BEGIN
   (* 4. Table/Box-Linux.Mod или Oneword/Oneword-Linux.Mod *)
   ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
-  (* 5. _Build/TableBox.sym *)
+  (* 5. TableBox.cp   |      |      |      | *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, cpFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 6. TableBox-Linux.cp *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , cpFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 7. Table/Box.cp или Oneword/Oneword.cp *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , FALSE, cpFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 8. Table/Box-Linux.cp или Oneword/Oneword-Linux.cp *)
+  ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , cpFile, fname, r) THEN
+    system := FALSE; hasSource := TRUE; hasCode := FALSE
+  (* 9. _Build/TableBox.sym *)
   ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, symFile, fname, r) THEN
     system := FALSE; hasSource := FALSE;
-    (* 5a. _Build/TableBox.ocf *)
+    (* 9a. _Build/TableBox.ocf *)
     hasCode := OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, codeFile, fname, r)
-  (* 6. _Build/TableBox-Linux.sym *)
+  (* 10. _Build/TableBox-Linux.sym *)
   ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , symFile, fname, r) THEN
     system := FALSE; hasSource := FALSE;
-    (* 6a. _Build/TableBox-Linux.ocf *)
+    (* 10a. _Build/TableBox-Linux.ocf *)
     hasCode := OpenFile(mod, w1, w2, FALSE, FALSE, TRUE, codeFile, fname, r)
-  (* 7. SYSDIR/_Build/TableBox.sym *)
+  (* 11. SYSDIR/_Build/TableBox.sym *)
   ELSIF OpenFile(mod, w1, w2, TRUE , FALSE, FALSE, symFile, fname, r) THEN
     system := TRUE; hasSource := FALSE;
-    (* 7a. _Build/TableBox.ocf *)
+    (* 11a. _Build/TableBox.ocf *)
     hasCode := OpenFile(mod, w1, w2, TRUE, FALSE, FALSE, codeFile, fname, r)
-  (* 8. SYSDIR/_Build/TableBox-Linux.sym *)
-  ELSIF OpenFile(mod, w1, w2, TRUE , FALSE, TRUE , symFile, fname, r) THEN
+  (* 12. SYSDIR/_Build/TableBox-Linux.sym *)
+  ELSIF OpenFile(mod, w1, w2, TRUE , FALSE, TRUE, symFile, fname, r) THEN
     system := TRUE; hasSource := FALSE;
-    (* 8a. _Build/TableBox-Linux.ocf *)
+    (* 12a. _Build/TableBox-Linux.ocf *)
     hasCode := OpenFile(mod, w1, w2, TRUE, FALSE, TRUE, codeFile, fname, r)
   END;
   RETURN r
