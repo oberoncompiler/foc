@@ -223,7 +223,7 @@ BEGIN
   ELSIF OpenFile(mod, w1, w2, FALSE, TRUE , TRUE , ftype, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 5. TableBox.cp   |      |      |      | *)
-  ELSIF    OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, cpFile, fname, r) THEN
+  ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, FALSE, cpFile, fname, r) THEN
     system := FALSE; hasSource := TRUE; hasCode := FALSE
   (* 6. TableBox-Linux.cp *)
   ELSIF OpenFile(mod, w1, w2, FALSE, FALSE, TRUE , cpFile, fname, r) THEN
