@@ -2,6 +2,9 @@ PROG=foc
 
 all: $(PROG) lib
 
+Freeoberon/Code/CharUtils.ocf: Lib/Char/Utils.cp
+	echo "ConsCompiler.Compile('Lib/Char', 'Utils.cp')" | ./runc
+
 Code/Args.ocf: System/Mod/Args.Mod
 	echo "ConsCompiler.Compile('System/Mod', 'Args.Mod')" | ./runc
 
@@ -45,7 +48,7 @@ Freeoberon/Code/LinkerProxy.ocf: Freeoberon/Mod/LinkerProxy.Mod Dev/Code/CPM.ocf
 Freeoberon/Code/Linker.ocf: Freeoberon/Mod/Linker.Mod Freeoberon/Code/LinkerProxy.ocf Dev2/Code/LnkBase.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Linker.Mod')" | ./runc
 
-Freeoberon/Code/Main.ocf: Freeoberon/Mod/Main.Mod Freeoberon/Code/Config.ocf Freeoberon/Code/Platform.ocf Freeoberon/Code/Scanner.ocf Freeoberon/Code/Compiler.ocf Freeoberon/Code/Linker.ocf Host/Code/Args.ocf
+Freeoberon/Code/Main.ocf: Freeoberon/Mod/Main.Mod Freeoberon/Code/Config.ocf Freeoberon/Code/Platform.ocf Freeoberon/Code/Scanner.ocf Freeoberon/Code/Compiler.ocf Freeoberon/Code/Linker.ocf Host/Code/Args.ocf Freeoberon/Code/CharUtils.ocf
 	echo "ConsCompiler.Compile('Freeoberon/Mod', 'Main.Mod')" | ./runc
 
 $(PROG): Freeoberon/Code/Main.ocf Host/Code/Files.ocf Dev2/Code/LnkChmod.ocf
